@@ -1,4 +1,0 @@
-com\weatherhub\config\WebConfig.class
-com\weatherhub\controller\WeatherController.class
-com\weatherhub\service\WeatherService.class
-com\weatherhub\WeatherHubApplication.class
