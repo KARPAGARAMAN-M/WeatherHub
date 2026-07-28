@@ -1,26 +1,37 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getThemeForCondition, applyThemeToDOM } from '../utils/weatherTheme';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { WEATHER_THEMES, getThemeForCondition, applyThemeToDOM } from '../utils/weatherTheme';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [currentCondition, setCurrentCondition] = useState('Clear');
-  const [theme, setTheme] = useState(() => getThemeForCondition('Clear'));
+  const [iconCode, setIconCode] = useState('01d');
+  const [sysData, setSysData] = useState(null);
+  const [dtTimestamp, setDtTimestamp] = useState(null);
 
-  const updateCondition = (conditionStr) => {
-    if (!conditionStr) return;
-    setCurrentCondition(conditionStr);
-    const newTheme = getThemeForCondition(conditionStr);
-    setTheme(newTheme);
-    applyThemeToDOM(newTheme);
-  };
+  // Derive active theme strictly from weather condition, icon code, and daylight calculation
+  const activeTheme = getThemeForCondition(currentCondition, iconCode, sysData, dtTimestamp);
+
+  const updateCondition = useCallback((conditionMain, icon = '', sys = null, dt = null) => {
+    if (conditionMain) setCurrentCondition(conditionMain);
+    if (icon) setIconCode(icon);
+    if (sys) setSysData(sys);
+    if (dt) setDtTimestamp(dt);
+  }, []);
 
   useEffect(() => {
-    applyThemeToDOM(theme);
-  }, [theme]);
+    applyThemeToDOM(activeTheme);
+  }, [activeTheme]);
 
   return (
-    <ThemeContext.Provider value={{ currentCondition, theme, updateCondition }}>
+    <ThemeContext.Provider
+      value={{
+        currentCondition,
+        iconCode,
+        theme: activeTheme,
+        updateCondition,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

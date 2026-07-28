@@ -11,69 +11,90 @@ import PlacesGrid from './components/PlacesGrid';
 import WeatherEffects from './components/WeatherEffects';
 import ApiKeyModal from './components/ApiKeyModal';
 import { WeatherLoader, WeatherError } from './components/Loader';
-import { Sparkles, ExternalLink, Key } from 'lucide-react';
+import { Settings, CloudSun } from 'lucide-react';
 
 function DashboardContent() {
   const { currentWeather, forecast, pollution, loading, error, refetch } = useWeather();
-  const { isDemoMode, setIsKeyModalOpen } = useWeatherContext();
+  const { setIsSettingsOpen } = useWeatherContext();
 
   return (
-    <div style={{ minHeight: '100vh', padding: '0 1rem 3rem 1rem', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        padding: '0 1.25rem 4rem 1.25rem',
+        maxWidth: '1180px',
+        margin: '0 auto',
+        position: 'relative',
+        zIndex: 1,
+      }}
+    >
+      {/* Dynamic Header */}
       <Header onRefresh={refetch} />
 
-      {/* Demo Mode Banner */}
-      {isDemoMode && (
-        <div
-          style={{
-            background: 'rgba(255, 213, 79, 0.15)',
-            border: '1px solid rgba(255, 213, 79, 0.35)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '16px',
-            padding: '10px 16px',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            fontSize: '0.85rem',
-            color: '#fff',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-            <span>
-              <strong>Running in Demo Mode:</strong> Showing simulated weather data. Add your OpenWeather API key to get live satellite data worldwide.
-            </span>
-          </div>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => setIsKeyModalOpen(true)}
-            style={{ padding: '4px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-          >
-            Add API Key
-          </button>
-        </div>
-      )}
-
-      {/* Main Content Area */}
+      {/* Dashboard Main Content */}
       {loading ? (
         <WeatherLoader />
       ) : error && !currentWeather ? (
         <WeatherError message={error} onRetry={refetch} />
+      ) : !currentWeather ? (
+        <div
+          className="surface-card animate-fadeIn"
+          style={{
+            padding: '4rem 2rem',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1.25rem',
+            marginTop: '1.5rem',
+          }}
+        >
+          <div
+            style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: 'var(--radius-xl)',
+              background: 'var(--badge-bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 24px var(--color-primary-glow)',
+            }}
+          >
+            <CloudSun size={36} style={{ color: 'var(--color-primary)' }} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+              🌤 Welcome to WeatherHub
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--color-text-secondary)', maxWidth: '460px', lineHeight: '1.6' }}>
+              Search for any city or click a saved location to experience the live weather forecast and dynamic theme transitions.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => setIsSettingsOpen(true)}
+            style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Settings size={18} /> Open Settings
+          </button>
+        </div>
       ) : (
         <main>
-          {/* Top Row: Main Hero & Metrics */}
+          {/* Main Weather Hero Card */}
           <WeatherHero currentWeather={currentWeather} />
+
+          {/* Weather Details & Metrics Grid */}
           <WeatherMetrics currentWeather={currentWeather} />
 
-          {/* Forecast & AQI Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-            <ForecastSection forecastData={forecast} timezoneOffset={currentWeather?.timezone} />
-            <AirQualityCard pollutionData={pollution} />
-          </div>
+          {/* Hourly Timeline & 7-Day Forecast */}
+          <ForecastSection forecastData={forecast} timezoneOffset={currentWeather?.timezone} />
 
-          {/* Multi-City Dashboard Places Grid */}
+          {/* Air Quality Index Gauge */}
+          <AirQualityCard pollutionData={pollution} />
+
+          {/* Saved Places Grid */}
           <PlacesGrid />
         </main>
       )}
@@ -81,9 +102,27 @@ function DashboardContent() {
       {/* Settings Modal */}
       <ApiKeyModal />
 
-      {/* Footer */}
-      <footer style={{ marginTop: '3rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-        <p>WeatherHub React Dashboard • Powered by OpenWeatherMap API & Vite</p>
+      {/* Clean Premium Footer */}
+      <footer
+        style={{
+          marginTop: '4rem',
+          paddingTop: '2rem',
+          borderTop: '1px solid var(--card-border)',
+          textAlign: 'center',
+          fontSize: '0.85rem',
+          color: 'var(--color-text-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '6px',
+        }}
+      >
+        <p style={{ fontWeight: '600', color: 'var(--color-text)' }}>
+          WeatherHub • Dynamic Premium Weather Dashboard
+        </p>
+        <p style={{ fontSize: '0.78rem', opacity: 0.7 }}>
+          Powered by OpenWeather & React • Real-Time Dynamic Theme Engine
+        </p>
       </footer>
     </div>
   );

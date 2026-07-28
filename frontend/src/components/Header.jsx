@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { CloudSun, Navigation, Key, Sparkles, RefreshCw } from 'lucide-react';
+import { CloudSun, Navigation, Settings, RefreshCw } from 'lucide-react';
 import SearchBar from './SearchBar';
-import UnitToggle from './UnitToggle';
 import { useWeatherContext } from '../context/WeatherContext';
 
 export default function Header({ onRefresh }) {
-  const { setActiveCity, isDemoMode, setIsKeyModalOpen } = useWeatherContext();
+  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit } = useWeatherContext();
   const [isLocating, setIsLocating] = useState(false);
 
   const handleGeolocation = () => {
@@ -16,18 +15,42 @@ export default function Header({ onRefresh }) {
 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        setActiveCity({
-          name: 'Current Location',
-          lat: latitude,
-          lon: longitude,
-        });
-        setIsLocating(false);
+        try {
+          const params = new URLSearchParams({ lat: latitude, lon: longitude });
+          if (apiKey) params.append('apiKey', apiKey);
+
+          const res = await fetch(`/api/weather/current?${params.toString()}`);
+          if (res.ok) {
+            const data = await res.json();
+            setActiveCity({
+              name: data.name || 'Current Location',
+              state: data.state || '',
+              country: data.sys?.country || '',
+              lat: latitude,
+              lon: longitude,
+            });
+          } else {
+            setActiveCity({
+              name: 'Current Location',
+              lat: latitude,
+              lon: longitude,
+            });
+          }
+        } catch (e) {
+          setActiveCity({
+            name: 'Current Location',
+            lat: latitude,
+            lon: longitude,
+          });
+        } finally {
+          setIsLocating(false);
+        }
       },
       (error) => {
         console.warn('Geolocation error:', error);
-        alert('Could not retrieve your location. Please check your browser permissions.');
+        alert('Could not retrieve your location. Please check browser permissions.');
         setIsLocating(false);
       }
     );
@@ -37,92 +60,114 @@ export default function Header({ onRefresh }) {
     <header
       style={{
         display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1rem',
-        padding: '1.2rem 0',
-        marginBottom: '1.5rem',
+        flexDirection: 'column',
+        gap: '1.25rem',
+        padding: '1.25rem 0',
+        marginBottom: '1rem',
+        position: 'relative',
+        zIndex: 100,
+        overflow: 'visible',
       }}
     >
-      {/* Brand Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Top Main Header Row */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+          position: 'relative',
+          zIndex: 200,
+          overflow: 'visible',
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div
+            style={{
+              background: 'var(--card-bg)',
+              border: '1.5px solid var(--card-border)',
+              backdropFilter: 'blur(12px)',
+              padding: '10px',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 16px var(--color-primary-glow)',
+            }}
+          >
+            <CloudSun size={26} style={{ color: 'var(--color-primary)' }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: '900', letterSpacing: '-0.035em' }}>
+              Weather<span style={{ color: 'var(--color-primary)' }}>Hub</span>
+            </h1>
+          </div>
+        </div>
+
+        {/* Center Search Bar */}
         <div
           style={{
-            background: 'var(--color-card-bg)',
-            border: '1px solid var(--color-card-border)',
-            padding: '10px',
-            borderRadius: '16px',
+            flex: '1 1 300px',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 15px var(--color-primary)',
+            maxWidth: '520px',
+            position: 'relative',
+            zIndex: 1000,
           }}
         >
-          <CloudSun size={28} style={{ color: 'var(--color-primary)' }} />
+          <SearchBar />
         </div>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '800', lineHeight: 1.1 }}>
-            Weather<span style={{ color: 'var(--color-primary)' }}>Hub</span>
-          </h1>
-          <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.7)' }}>
-            Live Predictions & Visual Metrics
-          </p>
-        </div>
-      </div>
 
-      {/* Center Search Bar */}
-      <div style={{ flex: '1 1 320px', display: 'flex', justifyContent: 'center' }}>
-        <SearchBar />
-      </div>
-
-      {/* Action Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        {/* Geolocation Button */}
-        <button
-          type="button"
-          className="btn-glass"
-          onClick={handleGeolocation}
-          disabled={isLocating}
-          title="Auto-detect weather at my location"
-        >
-          <Navigation size={16} className={isLocating ? 'animate-spin' : ''} />
-          <span className="hide-mobile">Near Me</span>
-        </button>
-
-        {/* Refresh Button */}
-        {onRefresh && (
+        {/* Action Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+          {/* Unit Toggle Button */}
           <button
             type="button"
-            className="btn-glass"
-            onClick={onRefresh}
-            title="Refresh Weather Data"
+            className="btn-ghost"
+            onClick={toggleUnit}
+            title={`Switch temperature unit to °${unit === 'C' ? 'F' : 'C'}`}
+            style={{ fontWeight: '800', padding: '6px 14px', fontSize: '0.9rem' }}
           >
-            <RefreshCw size={16} />
+            °{unit}
           </button>
-        )}
 
-        {/* Unit Switcher */}
-        <UnitToggle />
+          {/* Location Detect */}
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={handleGeolocation}
+            disabled={isLocating}
+            title="Detect my current location"
+          >
+            <Navigation size={18} className={isLocating ? 'animate-spin' : ''} />
+          </button>
 
-        {/* Key Settings Button / Demo Badge */}
-        <button
-          type="button"
-          className="btn-glass"
-          onClick={() => setIsKeyModalOpen(true)}
-          style={{
-            borderColor: isDemoMode ? 'rgba(255, 213, 79, 0.5)' : 'rgba(255,255,255,0.3)',
-          }}
-          title={isDemoMode ? 'Click to add OpenWeather API Key' : 'API Key Settings'}
-        >
-          {isDemoMode ? (
-            <Sparkles size={16} style={{ color: 'var(--color-primary)' }} />
-          ) : (
-            <Key size={16} />
+          {/* Refresh */}
+          {onRefresh && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={onRefresh}
+              title="Refresh weather data"
+            >
+              <RefreshCw size={18} />
+            </button>
           )}
-          <span className="hide-mobile">{isDemoMode ? 'Demo Mode' : 'Key Set'}</span>
-        </button>
+
+          {/* Settings */}
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Settings & API Key"
+          >
+            <Settings size={18} />
+          </button>
+        </div>
       </div>
     </header>
   );
 }
+

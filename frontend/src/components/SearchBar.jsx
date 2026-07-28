@@ -1,158 +1,239 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, Loader2, X } from 'lucide-react';
+import { Search, MapPin, Loader2, X, ChevronRight, Globe } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useGeocoding } from '../hooks/useWeather';
 import { useWeatherContext } from '../context/WeatherContext';
+import { getCountryName } from '../utils/formatters';
 
 export default function SearchBar() {
   const { setActiveCity } = useWeatherContext();
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const debouncedQuery = useDebounce(query, 300);
   const { suggestions, isSearching } = useGeocoding(debouncedQuery);
   const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
 
+  // Close dropdown on outside click or touch
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsOpen(false);
+        setSelectedIndex(-1);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
+
+  // Reset selected index when suggestions change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [suggestions]);
 
   const handleSelectCity = (cityObj) => {
     setActiveCity({
       name: cityObj.name,
-      country: cityObj.country,
+      state: cityObj.state || '',
+      country: cityObj.country || '',
       lat: cityObj.lat,
       lon: cityObj.lon,
     });
     setQuery('');
     setIsOpen(false);
+    setSelectedIndex(-1);
+    if (inputRef.current) inputRef.current.blur();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    if (suggestions.length > 0) {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return;
+
+    if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+      handleSelectCity(suggestions[selectedIndex]);
+    } else if (suggestions.length > 0) {
       handleSelectCity(suggestions[0]);
     } else {
-      setActiveCity({ name: query.trim() });
+      setActiveCity({ name: cleanQuery });
       setQuery('');
       setIsOpen(false);
+      setSelectedIndex(-1);
+      if (inputRef.current) inputRef.current.blur();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (!isOpen) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+      setSelectedIndex(-1);
     }
   };
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
-      <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
+    <div ref={dropdownRef} className="search-container">
+      <form onSubmit={handleSubmit} className="search-input-wrapper">
+        {/* Left Search Icon */}
         <Search
           size={18}
           style={{
             position: 'absolute',
-            left: '14px',
+            left: '16px',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: query ? 'var(--color-primary)' : 'var(--color-text-muted)',
             pointerEvents: 'none',
+            transition: 'color 300ms ease',
+            zIndex: 2,
           }}
         />
+
+        {/* Search Input */}
         <input
+          ref={inputRef}
           type="text"
-          className="glass-input"
-          placeholder="Search city or location worldwide..."
+          className="search-input"
+          placeholder="Search city, town, village, state, country..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
+          aria-label="Search city, town, village, state, or country"
         />
 
+        {/* Right Clear (×) Button */}
         {query && (
           <button
             type="button"
-            onClick={() => setQuery('')}
+            onClick={() => {
+              setQuery('');
+              setIsOpen(false);
+              setSelectedIndex(-1);
+              if (inputRef.current) inputRef.current.focus();
+            }}
             style={{
               position: 'absolute',
-              right: '12px',
+              right: '14px',
               top: '50%',
               transform: 'translateY(-50%)',
-              background: 'none',
+              background: 'rgba(255, 255, 255, 0.1)',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              color: 'var(--color-text-secondary)',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 200ms ease',
+              zIndex: 2,
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'var(--color-text-secondary)';
+            }}
+            title="Clear search"
           >
-            <X size={16} />
+            <X size={14} />
           </button>
         )}
       </form>
 
-      {/* Autocomplete Dropdown Menu */}
-      {isOpen && (query.trim().length >= 2 || isSearching) && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            left: 0,
-            right: 0,
-            background: 'rgba(20, 25, 35, 0.92)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '16px',
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
-            zIndex: 100,
-            overflow: 'hidden',
-            maxHeight: '280px',
-            overflowY: 'auto',
-          }}
-        >
+      {/* Floating Glassmorphic Autocomplete Dropdown */}
+      {isOpen && (query.trim().length >= 1 || isSearching) && (
+        <div className="search-dropdown">
           {isSearching && (
-            <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#aaa', fontSize: '0.9rem' }}>
-              <Loader2 size={16} className="animate-spin" /> Searching cities...
+            <div
+              style={{
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: 'var(--color-text-secondary)',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+              }}
+            >
+              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
+              Searching locations...
             </div>
           )}
 
           {!isSearching && suggestions.length === 0 && (
-            <div style={{ padding: '12px 16px', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
-              No matching locations found. Press Enter to search "{query}".
+            <div style={{ padding: '16px 18px', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+              Location not found. Please try a different city, town, or country.
             </div>
           )}
 
           {!isSearching &&
-            suggestions.map((item, idx) => (
-              <div
-                key={`${item.name}-${item.lat}-${item.lon}-${idx}`}
-                onClick={() => handleSelectCity(item)}
-                style={{
-                  padding: '10px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  cursor: 'pointer',
-                  borderBottom: idx < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                  transition: 'background 0.2s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <MapPin size={16} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontWeight: '600', color: '#fff', fontSize: '0.95rem' }}>
-                    {item.name}
+            suggestions.map((item, idx) => {
+              const isSelected = selectedIndex === idx;
+              const fullCountry = getCountryName(item.country);
+              const subDetails = [item.state, fullCountry].filter(Boolean).join(', ');
+
+              return (
+                <div
+                  key={`${item.name}-${item.state}-${item.country}-${item.lat}-${item.lon}-${idx}`}
+                  className={`search-suggestion-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleSelectCity(item)}
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div
+                      className="suggestion-icon"
+                      style={{
+                        padding: '8px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--badge-bg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--color-primary)',
+                        transition: 'transform 200ms ease, color 200ms ease',
+                      }}
+                    >
+                      <MapPin size={16} />
+                    </div>
+
+                    <div>
+                      <div className="suggestion-city" style={{ fontWeight: '700', color: 'var(--color-text)', fontSize: '0.96rem' }}>
+                        {item.name}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <Globe size={11} style={{ opacity: 0.7 }} />
+                        {subDetails || 'Global'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {item.state ? `${item.state}, ` : ''}{item.country}
-                  </div>
+
+                  <ChevronRight size={16} style={{ color: 'var(--color-text-muted)', opacity: 0.6 }} />
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       )}
     </div>
   );
 }
+

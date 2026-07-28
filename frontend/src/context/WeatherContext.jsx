@@ -3,22 +3,29 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const WeatherContext = createContext();
 
 const DEFAULT_SAVED_CITIES = [
-  { name: 'London', country: 'GB', lat: 51.5074, lon: -0.1278 },
-  { name: 'New York', country: 'US', lat: 40.7128, lon: -74.0060 },
-  { name: 'Tokyo', country: 'JP', lat: 35.6762, lon: 139.6503 },
+  { name: 'Chennai', state: 'Tamil Nadu', country: 'IN', lat: 13.0827, lon: 80.2707 },
+  { name: 'Mumbai', state: 'Maharashtra', country: 'IN', lat: 19.0760, lon: 72.8777 },
+  { name: 'Delhi', state: 'Delhi', country: 'IN', lat: 28.6139, lon: 77.2090 },
+  { name: 'Bengaluru', state: 'Karnataka', country: 'IN', lat: 12.9716, lon: 77.5946 },
+  { name: 'London', state: 'England', country: 'GB', lat: 51.5074, lon: -0.1278 },
+  { name: 'New York', state: 'New York', country: 'US', lat: 40.7128, lon: -74.0060 },
+  { name: 'Tokyo', state: 'Tokyo', country: 'JP', lat: 35.6762, lon: 139.6503 },
+  { name: 'Paris', state: 'Île-de-France', country: 'FR', lat: 48.8566, lon: 2.3522 },
+  { name: 'Sydney', state: 'New South Wales', country: 'AU', lat: -33.8688, lon: 151.2093 },
+  { name: 'Dubai', state: 'Dubai', country: 'AE', lat: 25.2048, lon: 55.2708 },
+  { name: 'Singapore', state: '', country: 'SG', lat: 1.3521, lon: 103.8198 },
+  { name: 'Toronto', state: 'Ontario', country: 'CA', lat: 43.6532, lon: -79.3832 },
 ];
 
 export function WeatherProvider({ children }) {
-  // Active city selection
   const [activeCity, setActiveCity] = useState(() => {
     const cached = localStorage.getItem('weatherhub_active_city');
     if (cached) {
       try { return JSON.parse(cached); } catch (e) { /* ignore */ }
     }
-    return DEFAULT_SAVED_CITIES[0];
+    return DEFAULT_SAVED_CITIES[0]; // Chennai
   });
 
-  // Saved multi-city dashboard list
   const [savedCities, setSavedCities] = useState(() => {
     const cached = localStorage.getItem('weatherhub_saved_cities');
     if (cached) {
@@ -27,22 +34,19 @@ export function WeatherProvider({ children }) {
     return DEFAULT_SAVED_CITIES;
   });
 
-  // Temperature Unit (°C / °F)
   const [unit, setUnit] = useState(() => {
     return localStorage.getItem('weatherhub_unit') || 'C';
   });
 
-  // Custom API Key overrides env variable if provided
   const [apiKey, setApiKey] = useState(() => {
     const envKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
     const localKey = localStorage.getItem('weatherhub_api_key');
     return localKey || envKey || '';
   });
 
-  // Modal open state for API key settings
-  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Sync state to local storage
+  // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('weatherhub_active_city', JSON.stringify(activeCity));
   }, [activeCity]);
@@ -54,6 +58,41 @@ export function WeatherProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('weatherhub_unit', unit);
   }, [unit]);
+
+  // Auto-detect user's current location on initial app launch if no cached city exists
+  useEffect(() => {
+    const cached = localStorage.getItem('weatherhub_active_city');
+    if (!cached && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const params = new URLSearchParams({ lat: latitude, lon: longitude });
+            if (apiKey) params.append('apiKey', apiKey);
+
+            const res = await fetch(`/api/weather/current?${params.toString()}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.name) {
+                setActiveCity({
+                  name: data.name,
+                  state: data.state || '',
+                  country: data.sys?.country || '',
+                  lat: latitude,
+                  lon: longitude,
+                });
+              }
+            }
+          } catch (e) {
+            /* Keep default city */
+          }
+        },
+        () => {
+          /* Keep default city */
+        }
+      );
+    }
+  }, [apiKey]);
 
   const updateApiKey = (key) => {
     const cleanKey = key.trim();
@@ -69,25 +108,49 @@ export function WeatherProvider({ children }) {
     setUnit(prev => (prev === 'C' ? 'F' : 'C'));
   };
 
-  const isCitySaved = (cityName) => {
-    if (!cityName) return false;
-    return savedCities.some(c => c.name.toLowerCase() === cityName.toLowerCase());
+  // Check if a city is saved based on lat/lon or location details
+  const isCitySaved = (target) => {
+    if (!target) return false;
+    const nameStr = typeof target === 'string' ? target : target.name;
+    const latNum = target?.lat;
+    const lonNum = target?.lon;
+
+    return savedCities.some(c => {
+      if (latNum != null && lonNum != null && c.lat != null && c.lon != null) {
+        return Math.abs(c.lat - latNum) < 0.05 && Math.abs(c.lon - lonNum) < 0.05;
+      }
+      return c.name.toLowerCase() === nameStr?.toLowerCase();
+    });
   };
 
   const toggleSaveCity = (cityObj) => {
     if (!cityObj || !cityObj.name) return;
     setSavedCities(prev => {
-      const exists = prev.some(c => c.name.toLowerCase() === cityObj.name.toLowerCase());
+      const exists = isCitySaved(cityObj);
       if (exists) {
-        return prev.filter(c => c.name.toLowerCase() !== cityObj.name.toLowerCase());
+        return prev.filter(c => {
+          if (cityObj.lat != null && cityObj.lon != null && c.lat != null && c.lon != null) {
+            return !(Math.abs(c.lat - cityObj.lat) < 0.05 && Math.abs(c.lon - cityObj.lon) < 0.05);
+          }
+          return c.name.toLowerCase() !== cityObj.name.toLowerCase();
+        });
       } else {
         return [...prev, cityObj];
       }
     });
   };
 
-  const removeSavedCity = (cityName) => {
-    setSavedCities(prev => prev.filter(c => c.name.toLowerCase() !== cityName.toLowerCase()));
+  const removeSavedCity = (target) => {
+    const nameStr = typeof target === 'string' ? target : target?.name;
+    const latNum = target?.lat;
+    const lonNum = target?.lon;
+
+    setSavedCities(prev => prev.filter(c => {
+      if (latNum != null && lonNum != null && c.lat != null && c.lon != null) {
+        return !(Math.abs(c.lat - latNum) < 0.05 && Math.abs(c.lon - lonNum) < 0.05);
+      }
+      return c.name.toLowerCase() !== nameStr?.toLowerCase();
+    }));
   };
 
   return (
@@ -104,9 +167,8 @@ export function WeatherProvider({ children }) {
         toggleUnit,
         apiKey,
         updateApiKey,
-        isKeyModalOpen,
-        setIsKeyModalOpen,
-        isDemoMode: !apiKey,
+        isSettingsOpen,
+        setIsSettingsOpen,
       }}
     >
       {children}

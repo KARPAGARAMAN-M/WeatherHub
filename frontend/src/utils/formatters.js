@@ -12,16 +12,72 @@ export function convertTemp(celsius, unit = 'C') {
 
 export function formatTemp(celsius, unit = 'C') {
   const val = convertTemp(celsius, unit);
-  return `${val}°${unit}`;
+  return `${val}°`;
 }
 
 export function formatTime(unixTimestamp, timezoneOffsetSeconds = 0) {
   if (!unixTimestamp) return '--:--';
-  // OpenWeather timestamp is UTC seconds; timezoneOffset is seconds offset from UTC
   const localDate = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
-  return localDate.toLocaleTimeString([], {
+  return localDate.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: true,
+    timeZone: 'UTC',
+  });
+}
+
+/**
+ * Formats timestamp specifically into Indian Standard Time (IST - Asia/Kolkata)
+ */
+export function formatTimeIST(unixTimestamp) {
+  if (!unixTimestamp) return '--:--';
+  const date = new Date(unixTimestamp * 1000);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  });
+}
+
+/**
+ * Returns a human-friendly timezone code label (e.g. IST (UTC+5:30), GMT, EST)
+ */
+export function getTimezoneLabel(timezoneOffsetSeconds = 19800, countryCode = '') {
+  if (countryCode?.toUpperCase() === 'IN' || timezoneOffsetSeconds === 19800) {
+    return 'IST (UTC+5:30)';
+  }
+  if (timezoneOffsetSeconds === 0) return 'GMT (UTC+0)';
+  if (timezoneOffsetSeconds === 3600) return 'CET (UTC+1)';
+  if (timezoneOffsetSeconds === 7200) return 'EET (UTC+2)';
+  if (timezoneOffsetSeconds === 10800) return 'MSK (UTC+3)';
+  if (timezoneOffsetSeconds === 14400) return 'GST (UTC+4)';
+  if (timezoneOffsetSeconds === 25200) return 'ICT (UTC+7)';
+  if (timezoneOffsetSeconds === 28800) return 'SGT (UTC+8)';
+  if (timezoneOffsetSeconds === 32400) return 'JST (UTC+9)';
+  if (timezoneOffsetSeconds === 36000) return 'AEST (UTC+10)';
+  if (timezoneOffsetSeconds === 43200) return 'NZST (UTC+12)';
+  if (timezoneOffsetSeconds === -18000) return 'EST (UTC-5)';
+  if (timezoneOffsetSeconds === -21600) return 'CST (UTC-6)';
+  if (timezoneOffsetSeconds === -28800) return 'PST (UTC-8)';
+  if (timezoneOffsetSeconds === -10800) return 'BRT (UTC-3)';
+
+  const totalMinutes = Math.abs(Math.round(timezoneOffsetSeconds / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const sign = timezoneOffsetSeconds >= 0 ? '+' : '-';
+  const formattedHours = String(hours).padStart(2, '0');
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  return `UTC${sign}${formattedHours}:${formattedMinutes}`;
+}
+
+export function formatDate(unixTimestamp, timezoneOffsetSeconds = 0) {
+  if (!unixTimestamp) return '';
+  const date = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
     timeZone: 'UTC',
   });
 }
@@ -30,7 +86,7 @@ export function formatDayName(unixTimestamp, timezoneOffsetSeconds = 0) {
   if (!unixTimestamp) return '';
   const date = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
   const today = new Date();
-  
+
   if (date.getUTCDate() === today.getUTCDate() && date.getUTCMonth() === today.getUTCMonth()) {
     return 'Today';
   }
@@ -54,11 +110,9 @@ export function getWindDirection(deg) {
 export function formatWind(speedMps, unit = 'C') {
   if (speedMps === undefined || speedMps === null) return '--';
   if (unit === 'F') {
-    // Convert m/s to mph
     const mph = Math.round(speedMps * 2.23694);
     return `${mph} mph`;
   }
-  // km/h
   const kmh = Math.round(speedMps * 3.6);
   return `${kmh} km/h`;
 }
@@ -66,16 +120,47 @@ export function formatWind(speedMps, unit = 'C') {
 export function getAqiInfo(aqi) {
   switch (aqi) {
     case 1:
-      return { label: 'Good', color: '#4CAF50', bg: 'rgba(76, 175, 80, 0.2)', description: 'Air quality is considered satisfactory.' };
+      return { label: 'Good', color: '#22C55E', bg: 'rgba(34, 197, 94, 0.15)', description: 'Air quality is considered satisfactory.' };
     case 2:
-      return { label: 'Fair', color: '#8BC34A', bg: 'rgba(139, 195, 74, 0.2)', description: 'Air quality is acceptable.' };
+      return { label: 'Fair', color: '#84CC16', bg: 'rgba(132, 204, 22, 0.15)', description: 'Air quality is acceptable.' };
     case 3:
-      return { label: 'Moderate', color: '#FFC107', bg: 'rgba(255, 193, 7, 0.2)', description: 'Members of sensitive groups may experience health effects.' };
+      return { label: 'Moderate', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.15)', description: 'Sensitive groups may experience health effects.' };
     case 4:
-      return { label: 'Poor', color: '#FF9800', bg: 'rgba(255, 152, 0, 0.2)', description: 'Everyone may begin to experience health effects.' };
+      return { label: 'Poor', color: '#F97316', bg: 'rgba(249, 115, 22, 0.15)', description: 'Everyone may begin to experience health effects.' };
     case 5:
-      return { label: 'Very Poor', color: '#F44336', bg: 'rgba(244, 67, 54, 0.2)', description: 'Health warnings of emergency conditions.' };
+      return { label: 'Very Poor', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', description: 'Health warnings of emergency conditions.' };
     default:
-      return { label: 'Unknown', color: '#9E9E9E', bg: 'rgba(158, 158, 158, 0.2)', description: 'No air pollution data available.' };
+      return { label: 'Unknown', color: '#94A3B8', bg: 'rgba(148, 163, 184, 0.15)', description: 'No air quality data available.' };
   }
 }
+
+/**
+ * Converts ISO 3166-1 alpha-2 country codes (e.g., 'IN', 'US') to full country names ('India', 'United States')
+ */
+export function getCountryName(countryCode) {
+  if (!countryCode) return '';
+  if (countryCode.length > 2) return countryCode;
+  try {
+    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+    return regionNames.of(countryCode.toUpperCase()) || countryCode;
+  } catch (e) {
+    return countryCode;
+  }
+}
+
+/**
+ * Formats full location string with City, State, and Country (e.g. "Salem, Tamil Nadu, India")
+ */
+export function formatLocationTitle({ name, state, country }) {
+  const parts = [];
+  if (name) parts.push(name);
+  if (state && state.trim().toLowerCase() !== name?.trim().toLowerCase()) {
+    parts.push(state.trim());
+  }
+  if (country) {
+    const fullCountry = getCountryName(country.trim());
+    parts.push(fullCountry);
+  }
+  return parts.join(', ');
+}
+
