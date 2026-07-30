@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useThemeContext } from '../context/ThemeContext';
 
 /**
  * WeatherEffects Component
- * Dynamic Background Animation Engine:
+ * Dynamic Background Animation & Dual-Layer Gradient Cross-Fade Engine:
+ * - 800ms Butter-Smooth Background Cross-Fade between all weather condition transitions
  * - Clear: Sunbeam glow + warm ambient orbs
  * - PartlyCloudy: Floating sky clouds
  * - Clouds: Rolling cloud deck
@@ -17,6 +18,29 @@ export default function WeatherEffects() {
   const { theme } = useThemeContext();
   const canvasRef = useRef(null);
   const activeKey = theme?.key || 'Clear';
+
+  // --- Dual Layer Background Cross-Fade Engine ---
+  const initialGrad = theme?.bgGradient || 'linear-gradient(135deg, #0284C7 0%, #38BDF8 40%, #F59E0B 80%, #FBBF24 100%)';
+  const [bgLayers, setBgLayers] = useState({
+    activeLayer: 'A',
+    gradA: initialGrad,
+    gradB: initialGrad,
+  });
+
+  const prevGradientRef = useRef(theme?.bgGradient);
+
+  useEffect(() => {
+    if (theme?.bgGradient && theme.bgGradient !== prevGradientRef.current) {
+      prevGradientRef.current = theme.bgGradient;
+      setBgLayers((prev) => {
+        if (prev.activeLayer === 'A') {
+          return { activeLayer: 'B', gradA: prev.gradA, gradB: theme.bgGradient };
+        } else {
+          return { activeLayer: 'A', gradA: theme.bgGradient, gradB: prev.gradB };
+        }
+      });
+    }
+  }, [theme?.bgGradient]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -147,63 +171,99 @@ export default function WeatherEffects() {
   }, [activeKey]);
 
   return (
-    <div className="weather-ambient" aria-hidden="true">
-      {/* Canvas for Rain, Thunderstorm, Snow, and Night Stars */}
-      <canvas ref={canvasRef} className="weather-canvas" />
-
-      {/* Primary Ambient Light Orb - Shifts color with 500ms CSS transitions */}
+    <>
+      {/* Background Gradient Layer A */}
       <div
         style={{
-          position: 'absolute',
-          top: '-15%',
-          right: '-10%',
-          width: '55vw',
-          height: '55vw',
-          maxWidth: '650px',
-          maxHeight: '650px',
-          background: `radial-gradient(circle, ${theme?.ambientColor || 'rgba(251, 191, 36, 0.35)'} 0%, transparent 70%)`,
-          borderRadius: '50%',
-          filter: 'blur(70px)',
-          transition: 'background 500ms ease',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: bgLayers.gradA,
+          backgroundAttachment: 'fixed',
+          opacity: bgLayers.activeLayer === 'A' ? 1 : 0,
+          transition: 'opacity 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+          pointerEvents: 'none',
+          zIndex: -2,
         }}
       />
 
-      {/* Secondary Ambient Light Orb - Bottom Left */}
+      {/* Background Gradient Layer B */}
       <div
         style={{
-          position: 'absolute',
-          bottom: '-20%',
-          left: '-10%',
-          width: '45vw',
-          height: '45vw',
-          maxWidth: '550px',
-          maxHeight: '550px',
-          background: `radial-gradient(circle, ${theme?.ambientSecondary || 'rgba(245, 158, 11, 0.2)'} 0%, transparent 70%)`,
-          borderRadius: '50%',
-          filter: 'blur(90px)',
-          opacity: 0.8,
-          transition: 'background 500ms ease',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: bgLayers.gradB,
+          backgroundAttachment: 'fixed',
+          opacity: bgLayers.activeLayer === 'B' ? 1 : 0,
+          transition: 'opacity 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+          pointerEvents: 'none',
+          zIndex: -1,
         }}
       />
 
-      {/* DOM Animated Fog / Cloud Overlays */}
-      {(activeKey === 'Clouds' || activeKey === 'Mist' || activeKey === 'PartlyCloudy') && (
+      <div className="weather-ambient" aria-hidden="true">
+        {/* Canvas for Rain, Thunderstorm, Snow, and Night Stars */}
+        <canvas ref={canvasRef} className="weather-canvas" />
+
+        {/* Primary Ambient Light Orb - Shifts color with 600ms CSS transitions */}
         <div
           style={{
             position: 'absolute',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '40%',
-            background:
-              activeKey === 'Mist'
-                ? 'linear-gradient(180deg, rgba(203, 213, 225, 0.18) 0%, transparent 100%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
-            pointerEvents: 'none',
-            animation: 'fogShift 12s ease-in-out infinite',
+            top: '-15%',
+            right: '-10%',
+            width: '55vw',
+            height: '55vw',
+            maxWidth: '650px',
+            maxHeight: '650px',
+            background: `radial-gradient(circle, ${theme?.ambientColor || 'rgba(251, 191, 36, 0.35)'} 0%, transparent 70%)`,
+            borderRadius: '50%',
+            filter: 'blur(70px)',
+            transition: 'background 600ms ease, opacity 600ms ease',
           }}
         />
-      )}
-    </div>
+
+        {/* Secondary Ambient Light Orb - Bottom Left */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-20%',
+            left: '-10%',
+            width: '45vw',
+            height: '45vw',
+            maxWidth: '550px',
+            maxHeight: '550px',
+            background: `radial-gradient(circle, ${theme?.ambientSecondary || 'rgba(245, 158, 11, 0.2)'} 0%, transparent 70%)`,
+            borderRadius: '50%',
+            filter: 'blur(90px)',
+            opacity: 0.8,
+            transition: 'background 600ms ease, opacity 600ms ease',
+          }}
+        />
+
+        {/* DOM Animated Fog / Cloud Overlays */}
+        {(activeKey === 'Clouds' || activeKey === 'Mist' || activeKey === 'PartlyCloudy') && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              width: '100%',
+              height: '40%',
+              background:
+                activeKey === 'Mist'
+                  ? 'linear-gradient(180deg, rgba(203, 213, 225, 0.18) 0%, transparent 100%)'
+                  : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+              pointerEvents: 'none',
+              animation: 'fogShift 12s ease-in-out infinite',
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }

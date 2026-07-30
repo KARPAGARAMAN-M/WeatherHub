@@ -84,18 +84,34 @@ export function formatDate(unixTimestamp, timezoneOffsetSeconds = 0) {
 
 export function formatDayName(unixTimestamp, timezoneOffsetSeconds = 0) {
   if (!unixTimestamp) return '';
+
   const date = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
-  const today = new Date();
+  const now = new Date((Math.floor(Date.now() / 1000) + timezoneOffsetSeconds) * 1000);
 
-  if (date.getUTCDate() === today.getUTCDate() && date.getUTCMonth() === today.getUTCMonth()) {
-    return 'Today';
-  }
+  const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-  return date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+  const isToday =
+    date.getUTCFullYear() === now.getUTCFullYear() &&
+    date.getUTCMonth() === now.getUTCMonth() &&
+    date.getUTCDate() === now.getUTCDate();
+
+  if (isToday) return `Today, ${dateStr}`;
+
+  const tomorrow = new Date(now.getTime() + 86400000);
+  const isTomorrow =
+    date.getUTCFullYear() === tomorrow.getUTCFullYear() &&
+    date.getUTCMonth() === tomorrow.getUTCMonth() &&
+    date.getUTCDate() === tomorrow.getUTCDate();
+
+  if (isTomorrow) return `Tomorrow, ${dateStr}`;
+
+  const weekdayStr = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+  return `${weekdayStr}, ${dateStr}`;
 }
 
-export function formatHour(unixTimestamp, timezoneOffsetSeconds = 0) {
+export function formatHour(unixTimestamp, timezoneOffsetSeconds = 0, isFirst = false) {
   if (!unixTimestamp) return '';
+  if (isFirst === true) return 'Now';
   const date = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
   return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'UTC' });
 }

@@ -250,11 +250,11 @@ public class WeatherService {
         long sunsetEpoch = System.currentTimeMillis() / 1000 + 21600;
         if (daily != null && daily.containsKey("sunrise") && daily.get("sunrise") instanceof List) {
             List sunriseList = (List) daily.get("sunrise");
-            if (!sunriseList.isEmpty()) sunriseEpoch = parseIsoToEpochSeconds((String) sunriseList.get(0));
+            if (!sunriseList.isEmpty()) sunriseEpoch = parseIsoToEpochSeconds((String) sunriseList.get(0)) - tzOffsetSeconds;
         }
         if (daily != null && daily.containsKey("sunset") && daily.get("sunset") instanceof List) {
             List sunsetList = (List) daily.get("sunset");
-            if (!sunsetList.isEmpty()) sunsetEpoch = parseIsoToEpochSeconds((String) sunsetList.get(0));
+            if (!sunsetList.isEmpty()) sunsetEpoch = parseIsoToEpochSeconds((String) sunsetList.get(0)) - tzOffsetSeconds;
         }
 
         Map<String, Object> result = new HashMap<>();

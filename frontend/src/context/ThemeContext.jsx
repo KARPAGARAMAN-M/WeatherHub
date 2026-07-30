@@ -9,7 +9,7 @@ export function ThemeProvider({ children }) {
   const [sysData, setSysData] = useState(null);
   const [dtTimestamp, setDtTimestamp] = useState(null);
 
-  // Derive active theme strictly from weather condition, icon code, and daylight calculation
+  // Derive theme strictly based on weather condition, icon code, and daylight
   const activeTheme = getThemeForCondition(currentCondition, iconCode, sysData, dtTimestamp);
 
   const updateCondition = useCallback((conditionMain, icon = '', sys = null, dt = null) => {

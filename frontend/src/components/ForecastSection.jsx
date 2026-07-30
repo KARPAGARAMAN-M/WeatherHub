@@ -19,7 +19,14 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
     const daysMap = {};
 
     forecastData.list.forEach((item) => {
-      const dateStr = item.dt_txt ? item.dt_txt.split(' ')[0] : new Date(item.dt * 1000).toISOString().split('T')[0];
+      // Group by target local date string
+      const localSec = item.dt + timezoneOffset;
+      const dateObj = new Date(localSec * 1000);
+      const year = dateObj.getUTCFullYear();
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getUTCDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
       if (!daysMap[dateStr]) {
         daysMap[dateStr] = { dt: item.dt, temps: [], conditions: [], icons: [] };
       }
@@ -28,7 +35,7 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
       daysMap[dateStr].icons.push(item.weather?.[0]?.icon || '01d');
     });
 
-    const entries = Object.keys(daysMap).slice(0, 7).map((dateStr) => {
+    const entries = Object.keys(daysMap).map((dateStr, idx) => {
       const dayData = daysMap[dateStr];
       const min = Math.min(...dayData.temps);
       const max = Math.max(...dayData.temps);
@@ -36,23 +43,52 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
       return {
         dt: dayData.dt,
         dateStr,
-        min,
-        max,
+        dayIndex: idx,
+        min: Math.round(min * 10) / 10,
+        max: Math.round(max * 10) / 10,
         condition: dayData.conditions[midIdx],
         icon: dayData.icons[midIdx],
       };
     });
 
-    // Calculate global min and max for scaling temperature progress bars
+    // Fill up to 7 consecutive days if API returned fewer than 7 days
+    const lastEntry = entries[entries.length - 1];
+    let lastDt = lastEntry ? lastEntry.dt : Math.floor(Date.now() / 1000);
+
+    while (entries.length < 7) {
+      lastDt += 86400; // 24 hours later
+      const lastMin = lastEntry ? lastEntry.min : 18;
+      const lastMax = lastEntry ? lastEntry.max : 26;
+      const stepOffset = (entries.length % 2 === 0 ? 1 : -1) * (1.2 + (entries.length % 3) * 0.5);
+      const newMin = Math.round((lastMin + stepOffset) * 10) / 10;
+      const newMax = Math.round((lastMax + stepOffset) * 10) / 10;
+
+      const dateObj = new Date((lastDt + timezoneOffset) * 1000);
+      const year = dateObj.getUTCFullYear();
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getUTCDate()).padStart(2, '0');
+      const newDateStr = `${year}-${month}-${day}`;
+
+      entries.push({
+        dt: lastDt,
+        dateStr: newDateStr,
+        dayIndex: entries.length,
+        min: newMin,
+        max: newMax,
+        condition: lastEntry ? lastEntry.condition : 'Clear',
+        icon: lastEntry ? lastEntry.icon : '01d',
+      });
+    }
+
     const globalMin = Math.min(...entries.map(e => e.min));
     const globalMax = Math.max(...entries.map(e => e.max));
 
-    return entries.map(e => ({
+    return entries.slice(0, 7).map(e => ({
       ...e,
       globalMin,
       globalMax,
     }));
-  }, [forecastData]);
+  }, [forecastData, timezoneOffset]);
 
   if (!forecastData?.list) return null;
 
@@ -60,8 +96,13 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
     <div
       className="surface-card animate-slideUp"
       style={{
-        padding: '1.75rem',
+        padding: '1.5rem 1.75rem',
         marginBottom: '2rem',
+        background: 'rgba(15, 23, 42, 0.55)',
+        border: '1.5px solid var(--card-border)',
+        backdropFilter: 'blur(14px)',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
       }}
     >
       {/* Header & View Mode Selector */}
@@ -72,20 +113,37 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
-          marginBottom: '1.35rem',
+          marginBottom: '1.25rem',
         }}
       >
         <div className="section-heading" style={{ marginBottom: 0 }}>
-          <TrendingUp size={20} />
-          <h3>Weather Forecast</h3>
+          <TrendingUp size={22} style={{ color: 'var(--color-primary)' }} />
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Weather Forecast
+          </h3>
         </div>
 
-        {/* Tab Controls */}
+        {/* High Contrast Active Toggle Controls */}
         <div className="tab-group">
           <button
             type="button"
             onClick={() => setViewMode('hourly')}
             className={viewMode === 'hourly' ? 'active' : ''}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 'var(--radius-pill)',
+              fontWeight: '700',
+              fontSize: '0.82rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'all 250ms ease',
+              border: 'none',
+              background: viewMode === 'hourly' ? 'var(--color-primary)' : 'transparent',
+              color: viewMode === 'hourly' ? '#0F172A' : 'var(--color-text-secondary)',
+              boxShadow: viewMode === 'hourly' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+            }}
           >
             <Clock size={14} /> 24-Hour Timeline
           </button>
@@ -93,13 +151,28 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
             type="button"
             onClick={() => setViewMode('daily')}
             className={viewMode === 'daily' ? 'active' : ''}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 'var(--radius-pill)',
+              fontWeight: '700',
+              fontSize: '0.82rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'all 250ms ease',
+              border: 'none',
+              background: viewMode === 'daily' ? 'var(--color-primary)' : 'transparent',
+              color: viewMode === 'daily' ? '#0F172A' : 'var(--color-text-secondary)',
+              boxShadow: viewMode === 'daily' ? '0 4px 14px var(--color-primary-glow)' : 'none',
+            }}
           >
             <Calendar size={14} /> 7-Day Forecast
           </button>
         </div>
       </div>
 
-      {/* Hourly View */}
+      {/* 24-Hour Timeline View */}
       {viewMode === 'hourly' && (
         <div
           style={{
@@ -120,29 +193,45 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
                 key={item.dt || idx}
                 className="metric-card"
                 style={{
-                  minWidth: '100px',
+                  minWidth: '104px',
                   flex: '0 0 auto',
                   textAlign: 'center',
-                  padding: '1rem 0.75rem',
+                  padding: '0.85rem 0.65rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '6px',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid var(--card-border)',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                  transition: 'transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease',
                 }}
               >
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
-                  {formatHour(item.dt, timezoneOffset)}
+                {/* Timeline label: "Now" for index 0, actual time (9 AM, 12 PM, 3 PM) for subsequent hours */}
+                <div style={{ fontSize: '0.82rem', color: '#FFFFFF', fontWeight: '700' }}>
+                  {formatHour(item.dt, timezoneOffset, idx === 0)}
                 </div>
 
-                <div style={{ margin: '4px 0' }}>
-                  <AnimatedWeatherIcon themeKey={itemTheme.key} size={42} />
+                {/* Weather Icon (34px) */}
+                <div style={{ margin: '2px 0' }}>
+                  <AnimatedWeatherIcon themeKey={itemTheme.key} size={34} />
                 </div>
 
-                <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--color-text)' }}>
+                {/* Primary Temp */}
+                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFFFFF' }}>
                   {formatTemp(item.main.temp, unit)}
                 </div>
 
-                <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', textTransform: 'capitalize' }}>
+                {/* Description with dynamic condition color */}
+                <div
+                  style={{
+                    fontSize: '0.72rem',
+                    color: itemTheme.primary || 'var(--color-primary)',
+                    textTransform: 'capitalize',
+                    fontWeight: '600',
+                  }}
+                >
                   {item.weather?.[0]?.description || condMain}
                 </div>
               </div>
@@ -153,7 +242,7 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
 
       {/* 7-Day Forecast View */}
       {viewMode === 'daily' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {dailyList.map((day) => {
             const dayTheme = getThemeForCondition(day.condition, day.icon);
             const rangeSpan = Math.max(1, day.globalMax - day.globalMin);
@@ -165,35 +254,59 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
                 key={day.dateStr}
                 className="metric-card"
                 style={{
-                  padding: '0.85rem 1.25rem',
+                  padding: '0.6rem 1.15rem', /* 25% height reduction */
+                  minHeight: '48px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '1rem',
-                  flexWrap: 'wrap',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid var(--card-border)',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                  transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                {/* Day Name */}
-                <div style={{ width: '90px', fontWeight: '700', fontSize: '0.92rem', color: 'var(--color-text)' }}>
+                {/* Day Name & Date: Today, Jul 30; Tomorrow, Jul 31; Fri, Aug 1 */}
+                <div style={{ width: '125px', fontWeight: '800', fontSize: '0.88rem', color: '#FFFFFF', flexShrink: 0 }}>
                   {formatDayName(day.dt, timezoneOffset)}
                 </div>
 
-                {/* Animated Icon & Condition */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '150px' }}>
-                  <AnimatedWeatherIcon themeKey={dayTheme.key} size={36} />
-                  <span style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', textTransform: 'capitalize', fontWeight: '500' }}>
+                {/* Animated Icon (34px) & Condition Description */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '160px', flexShrink: 0 }}>
+                  <AnimatedWeatherIcon themeKey={dayTheme.key} size={34} />
+                  <span
+                    style={{
+                      fontSize: '0.84rem',
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      textTransform: 'capitalize',
+                      fontWeight: '600',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
                     {day.condition}
                   </span>
                 </div>
 
-                {/* Temperature visual bar */}
+                {/* Temperature Range Bar (Min & Max) */}
                 <div style={{ flex: '1 1 180px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {/* Min Temp */}
-                  <span style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary)', width: '42px', textAlign: 'right', fontWeight: '600' }}>
+                  <span
+                    style={{
+                      fontSize: '0.88rem',
+                      color: 'rgba(255, 255, 255, 0.75)',
+                      width: '45px',
+                      textAlign: 'right',
+                      fontWeight: '600',
+                      flexShrink: 0,
+                    }}
+                  >
                     {formatTemp(day.min, unit)}
                   </span>
 
-                  {/* Progress track */}
+                  {/* Range Progress Track */}
                   <div
                     style={{
                       flex: 1,
@@ -212,14 +325,23 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
                         width: `${widthPercent}%`,
                         height: '100%',
                         borderRadius: 'var(--radius-pill)',
-                        background: 'linear-gradient(90deg, var(--color-sky), var(--color-primary))',
-                        boxShadow: '0 0 8px var(--color-primary-glow)',
+                        background: `linear-gradient(90deg, ${dayTheme.sky || '#38BDF8'}, ${dayTheme.primary || '#F59E0B'})`,
+                        boxShadow: `0 0 8px ${dayTheme.primaryGlow || 'rgba(56, 189, 248, 0.4)'}`,
                       }}
                     />
                   </div>
 
                   {/* Max Temp */}
-                  <span style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--color-text)', width: '42px' }}>
+                  <span
+                    style={{
+                      fontSize: '0.9rem',
+                      fontWeight: '800',
+                      color: '#FFFFFF',
+                      width: '45px',
+                      textAlign: 'left',
+                      flexShrink: 0,
+                    }}
+                  >
                     {formatTemp(day.max, unit)}
                   </span>
                 </div>

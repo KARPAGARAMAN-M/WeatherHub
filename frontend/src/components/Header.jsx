@@ -4,7 +4,7 @@ import SearchBar from './SearchBar';
 import { useWeatherContext } from '../context/WeatherContext';
 
 export default function Header({ onRefresh }) {
-  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit } = useWeatherContext();
+  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey } = useWeatherContext();
   const [isLocating, setIsLocating] = useState(false);
 
   const handleGeolocation = () => {
@@ -61,8 +61,8 @@ export default function Header({ onRefresh }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.25rem',
-        padding: '1.25rem 0',
+        gap: '1rem',
+        padding: '1.25rem 0 0.5rem 0',
         marginBottom: '1rem',
         position: 'relative',
         zIndex: 100,
