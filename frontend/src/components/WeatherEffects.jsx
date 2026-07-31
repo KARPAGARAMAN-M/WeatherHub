@@ -59,28 +59,29 @@ export default function WeatherEffects() {
     const h = canvas.height;
 
     // --- 1. Rain & Thunderstorm Particles ---
-    const rainCount = activeKey === 'Thunderstorm' ? 120 : 80;
+    // --- 1. Rain & Thunderstorm Particles ---
+    const rainCount = activeKey === 'Thunderstorm' ? 140 : 90;
     const drops = Array.from({ length: rainCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      length: Math.random() * 20 + 12,
-      speed: Math.random() * 10 + 12,
+      length: Math.random() * 22 + 14,
+      speed: Math.random() * 12 + 14,
       opacity: Math.random() * 0.5 + 0.3,
     }));
 
     // --- 2. Snow Particles ---
-    const snowCount = 65;
+    const snowCount = 75;
     const snowflakes = Array.from({ length: snowCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: Math.random() * 3 + 1.5,
+      r: Math.random() * 3.5 + 1.5,
       speed: Math.random() * 1.5 + 0.5,
       sway: Math.random() * 2 - 1,
       opacity: Math.random() * 0.7 + 0.3,
     }));
 
     // --- 3. Night Starfield Particles ---
-    const starCount = 90;
+    const starCount = 110;
     const stars = Array.from({ length: starCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -89,26 +90,77 @@ export default function WeatherEffects() {
       alphaChange: (Math.random() * 0.02 + 0.005) * (Math.random() > 0.5 ? 1 : -1),
     }));
 
+    // --- 4. Moving Cloud Particles for Daytime & Cloudy ---
+    const cloudCount = 6;
+    const canvasClouds = Array.from({ length: cloudCount }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * (h * 0.35),
+      r: Math.random() * 60 + 50,
+      speed: Math.random() * 0.3 + 0.15,
+      opacity: Math.random() * 0.15 + 0.08,
+    }));
+
+    // --- 5. Daytime Sun Glow Aura animation angle ---
+    let sunAngle = 0;
+
     // --- Lightning Flash state ---
     let lightningOpacity = 0;
-    let nextFlashTimer = Math.floor(Math.random() * 200) + 100;
+    let nextFlashTimer = Math.floor(Math.random() * 180) + 90;
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // --- Draw Moving Clouds for Cloudy / PartlyCloudy / Rain ---
+      if (activeKey === 'Clouds' || activeKey === 'PartlyCloudy' || activeKey === 'Rain') {
+        ctx.fillStyle = '#FFFFFF';
+        canvasClouds.forEach((cl) => {
+          ctx.beginPath();
+          ctx.globalAlpha = cl.opacity;
+          ctx.arc(cl.x, cl.y, cl.r, 0, Math.PI * 2);
+          ctx.arc(cl.x + cl.r * 0.5, cl.y - cl.r * 0.2, cl.r * 0.7, 0, Math.PI * 2);
+          ctx.arc(cl.x - cl.r * 0.5, cl.y, cl.r * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          cl.x += cl.speed;
+          if (cl.x - cl.r * 2 > canvas.width) {
+            cl.x = -cl.r * 2;
+            cl.y = Math.random() * (canvas.height * 0.35);
+          }
+        });
+      }
+
+      // --- Gentle Sun Glow during Daytime / Clear / SunriseSunset ---
+      if (activeKey === 'Clear' || activeKey === 'SunriseSunset') {
+        sunAngle += 0.005;
+        const sunX = canvas.width * 0.8;
+        const sunY = canvas.height * 0.2;
+        const sunRadius = 160 + Math.sin(sunAngle) * 20;
+
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, sunRadius);
+        sunGrad.addColorStop(0, activeKey === 'SunriseSunset' ? 'rgba(249, 115, 22, 0.35)' : 'rgba(251, 191, 36, 0.35)');
+        sunGrad.addColorStop(0.5, activeKey === 'SunriseSunset' ? 'rgba(219, 39, 119, 0.15)' : 'rgba(245, 158, 11, 0.15)');
+        sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = sunGrad;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       if (activeKey === 'Rain' || activeKey === 'Thunderstorm') {
         // Draw Rain Streaks
         ctx.strokeStyle = activeKey === 'Thunderstorm' ? '#C084FC' : '#38BDF8';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.6;
         drops.forEach((d) => {
           ctx.beginPath();
           ctx.globalAlpha = d.opacity;
           ctx.moveTo(d.x, d.y);
-          ctx.lineTo(d.x - 3, d.y + d.length);
+          ctx.lineTo(d.x - 4, d.y + d.length);
           ctx.stroke();
 
           d.y += d.speed;
-          d.x -= 0.8;
+          d.x -= 0.9;
           if (d.y > canvas.height) {
             d.y = -20;
             d.x = Math.random() * canvas.width;
@@ -120,13 +172,13 @@ export default function WeatherEffects() {
           nextFlashTimer--;
           if (nextFlashTimer <= 0) {
             lightningOpacity = Math.random() * 0.85 + 0.15;
-            nextFlashTimer = Math.floor(Math.random() * 240) + 120;
+            nextFlashTimer = Math.floor(Math.random() * 200) + 80;
           }
 
           if (lightningOpacity > 0) {
             ctx.fillStyle = `rgba(224, 231, 255, ${lightningOpacity})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            lightningOpacity *= 0.82; // rapid decay
+            lightningOpacity *= 0.82;
           }
         }
       } else if (activeKey === 'Snow') {

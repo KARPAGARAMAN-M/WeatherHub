@@ -4,56 +4,24 @@ import SearchBar from './SearchBar';
 import { useWeatherContext } from '../context/WeatherContext';
 
 export default function Header({ onRefresh }) {
-  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey } = useWeatherContext();
+  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey, detectCurrentLocation, activeCity } = useWeatherContext();
   const [isLocating, setIsLocating] = useState(false);
 
-  const handleGeolocation = () => {
+  const handleGeolocation = async () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
       return;
     }
 
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const params = new URLSearchParams({ lat: latitude, lon: longitude });
-          if (apiKey) params.append('apiKey', apiKey);
-
-          const res = await fetch(`/api/weather/current?${params.toString()}`);
-          if (res.ok) {
-            const data = await res.json();
-            setActiveCity({
-              name: data.name || 'Current Location',
-              state: data.state || '',
-              country: data.sys?.country || '',
-              lat: latitude,
-              lon: longitude,
-            });
-          } else {
-            setActiveCity({
-              name: 'Current Location',
-              lat: latitude,
-              lon: longitude,
-            });
-          }
-        } catch (e) {
-          setActiveCity({
-            name: 'Current Location',
-            lat: latitude,
-            lon: longitude,
-          });
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      (error) => {
-        console.warn('Geolocation error:', error);
-        alert('Could not retrieve your location. Please check browser permissions.');
-        setIsLocating(false);
+    try {
+      const success = await detectCurrentLocation();
+      if (!success) {
+        alert('Could not retrieve your current location. Please check browser permissions.');
       }
-    );
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   return (

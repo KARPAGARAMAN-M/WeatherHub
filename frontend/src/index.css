@@ -466,9 +466,51 @@ header {
   100% { transform: translateX(-5%) translateY(0); opacity: 0.3; }
 }
 
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-fadeIn { animation: fadeIn 300ms ease both; }
 .animate-slideUp { animation: slideUp 400ms ease both; }
 .animate-spin-slow { animation: rotateSlow 24s linear infinite; }
+.animate-float { animation: floatSlow 6s ease-in-out infinite; }
+.animate-pulseGlow { animation: pulseGlow 4s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* Ripple button active effect */
+.btn-primary:active,
+.btn-ghost:active,
+.btn-icon:active {
+  transform: scale(0.96);
+  transition: transform 100ms ease;
+}
+
+/* Snap Scroll Container */
+.snap-scroll-x {
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+
+.snap-scroll-x > * {
+  scroll-snap-align: start;
+}
 
 /* ═══════════════════════════════════════════════════
    WEATHER BACKGROUND CANVAS & AMBIENT LAYER

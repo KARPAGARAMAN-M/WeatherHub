@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, Check, Key, ExternalLink } from 'lucide-react';
+import { Settings, X, Check, Key, ExternalLink, Navigation } from 'lucide-react';
 import { useWeatherContext } from '../context/WeatherContext';
 
 export default function ApiKeyModal() {
-  const { apiKey, updateApiKey, isSettingsOpen, setIsSettingsOpen, unit, toggleUnit } = useWeatherContext();
+  const {
+    apiKey,
+    updateApiKey,
+    isSettingsOpen,
+    setIsSettingsOpen,
+    unit,
+    toggleUnit,
+    useCurrentLocationOnLaunch,
+    setUseCurrentLocationOnLaunch,
+  } = useWeatherContext();
   const [inputKey, setInputKey] = useState(apiKey || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -90,8 +99,56 @@ export default function ApiKeyModal() {
           <div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-text)' }}>Settings</h3>
             <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-              Configure API preferences & temperature units
+              Configure API preferences & default location behavior
             </p>
+          </div>
+        </div>
+
+        {/* Startup Location Preference Toggle */}
+        <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--color-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+              <Navigation size={18} style={{ color: 'var(--color-primary)', marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--color-text)' }}>
+                  Use Current Location on Startup
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                  Auto-detect live geolocation when opening newly
+                </div>
+              </div>
+            </div>
+            <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px', cursor: 'pointer', flexShrink: 0 }}>
+              <input
+                type="checkbox"
+                checked={useCurrentLocationOnLaunch}
+                onChange={(e) => setUseCurrentLocationOnLaunch(e.target.checked)}
+                style={{ opacity: 0, width: 0, height: 0 }}
+              />
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: useCurrentLocationOnLaunch ? 'var(--color-primary)' : 'rgba(255,255,255,0.15)',
+                  borderRadius: '24px',
+                  transition: '300ms',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    content: '""',
+                    height: '18px',
+                    width: '18px',
+                    left: useCurrentLocationOnLaunch ? '22px' : '3px',
+                    bottom: '3px',
+                    backgroundColor: '#fff',
+                    borderRadius: '50%',
+                    transition: '300ms',
+                  }}
+                />
+              </span>
+            </label>
           </div>
         </div>
 

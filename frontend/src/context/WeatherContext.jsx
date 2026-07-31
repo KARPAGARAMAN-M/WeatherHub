@@ -18,12 +18,17 @@ const DEFAULT_SAVED_CITIES = [
 ];
 
 export function WeatherProvider({ children }) {
+  const [useCurrentLocationOnLaunch, setUseCurrentLocationOnLaunch] = useState(() => {
+    const cached = localStorage.getItem('weatherhub_use_current_location_on_launch');
+    return cached === null ? true : cached === 'true';
+  });
+
   const [activeCity, setActiveCity] = useState(() => {
     const cached = localStorage.getItem('weatherhub_active_city');
     if (cached) {
       try { return JSON.parse(cached); } catch (e) { /* ignore */ }
     }
-    return DEFAULT_SAVED_CITIES[0]; // Chennai
+    return DEFAULT_SAVED_CITIES[0]; // Chennai fallback
   });
 
   const [savedCities, setSavedCities] = useState(() => {
@@ -46,9 +51,15 @@ export function WeatherProvider({ children }) {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Sync to localStorage
+  // Sync settings & activeCity to localStorage
   useEffect(() => {
-    localStorage.setItem('weatherhub_active_city', JSON.stringify(activeCity));
+    localStorage.setItem('weatherhub_use_current_location_on_launch', String(useCurrentLocationOnLaunch));
+  }, [useCurrentLocationOnLaunch]);
+
+  useEffect(() => {
+    if (activeCity) {
+      localStorage.setItem('weatherhub_active_city', JSON.stringify(activeCity));
+    }
   }, [activeCity]);
 
   useEffect(() => {
@@ -59,10 +70,11 @@ export function WeatherProvider({ children }) {
     localStorage.setItem('weatherhub_unit', unit);
   }, [unit]);
 
-  // Auto-detect user's current location on initial app launch if no cached city exists
-  useEffect(() => {
-    const cached = localStorage.getItem('weatherhub_active_city');
-    if (!cached && navigator.geolocation) {
+  // Function to detect current user location via Geolocation API
+  const detectCurrentLocation = async () => {
+    if (!navigator.geolocation) return false;
+
+    return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
@@ -73,26 +85,43 @@ export function WeatherProvider({ children }) {
             const res = await fetch(`/api/weather/current?${params.toString()}`);
             if (res.ok) {
               const data = await res.json();
-              if (data.name) {
-                setActiveCity({
-                  name: data.name,
-                  state: data.state || '',
-                  country: data.sys?.country || '',
-                  lat: latitude,
-                  lon: longitude,
-                });
-              }
+              setActiveCity({
+                name: data.name || 'Current Location',
+                state: data.state || '',
+                country: data.sys?.country || '',
+                lat: latitude,
+                lon: longitude,
+                isCurrentLocation: true,
+              });
+              resolve(true);
+            } else {
+              setActiveCity({
+                name: 'Current Location',
+                lat: latitude,
+                lon: longitude,
+                isCurrentLocation: true,
+              });
+              resolve(true);
             }
           } catch (e) {
-            /* Keep default city */
+            resolve(false);
           }
         },
-        () => {
-          /* Keep default city */
-        }
+        (error) => {
+          console.warn('Geolocation default position request error/denied:', error);
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
+    });
+  };
+
+  // Auto-detect user's current location whenever app is opened newly if setting enabled
+  useEffect(() => {
+    if (useCurrentLocationOnLaunch && navigator.geolocation) {
+      detectCurrentLocation();
     }
-  }, [apiKey]);
+  }, []); // Run on initial launch / app mount
 
   const updateApiKey = (key) => {
     const cleanKey = key.trim();
@@ -169,6 +198,9 @@ export function WeatherProvider({ children }) {
         updateApiKey,
         isSettingsOpen,
         setIsSettingsOpen,
+        useCurrentLocationOnLaunch,
+        setUseCurrentLocationOnLaunch,
+        detectCurrentLocation,
       }}
     >
       {children}

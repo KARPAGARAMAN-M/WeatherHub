@@ -89,7 +89,11 @@ function DashboardContent() {
           <WeatherMetrics currentWeather={currentWeather} />
 
           {/* Hourly Timeline & 7-Day Forecast */}
-          <ForecastSection forecastData={forecast} timezoneOffset={currentWeather?.timezone} />
+          <ForecastSection
+            forecastData={forecast}
+            timezoneOffset={currentWeather?.timezone}
+            currentWeather={currentWeather}
+          />
 
           {/* Air Quality Index Gauge */}
           <AirQualityCard pollutionData={pollution} />

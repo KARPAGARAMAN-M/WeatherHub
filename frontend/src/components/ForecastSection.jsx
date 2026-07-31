@@ -1,18 +1,120 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, TrendingUp } from 'lucide-react';
 import { formatTemp, formatHour, formatDayName } from '../utils/formatters';
 import { useWeatherContext } from '../context/WeatherContext';
 import { getThemeForCondition } from '../utils/weatherTheme';
 import AnimatedWeatherIcon from './AnimatedWeatherIcon';
 
-export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
+export default function ForecastSection({ forecastData, timezoneOffset = 0, currentWeather = null }) {
   const { unit } = useWeatherContext();
   const [viewMode, setViewMode] = useState('hourly');
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  // Periodically refresh nowTick every minute so timeline automatically advances
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowTick(Date.now());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const hourlyList = useMemo(() => {
-    if (!forecastData?.list) return [];
-    return forecastData.list.slice(0, 12);
-  }, [forecastData]);
+    if (!forecastData?.list && !currentWeather) return [];
+
+    // Gather all raw data points (currentWeather + forecast items)
+    const points = [];
+    if (currentWeather?.main?.temp != null) {
+      points.push({
+        dt: currentWeather.dt || Math.floor(Date.now() / 1000),
+        temp: currentWeather.main.temp,
+        weather: currentWeather.weather || [],
+      });
+    }
+
+    if (Array.isArray(forecastData?.list)) {
+      forecastData.list.forEach((item) => {
+        if (item?.dt && item?.main?.temp != null) {
+          points.push({
+            dt: item.dt,
+            temp: item.main.temp,
+            weather: item.weather || [],
+          });
+        }
+      });
+    }
+
+    if (points.length === 0) return [];
+
+    // Sort data points chronologically by timestamp
+    points.sort((a, b) => a.dt - b.dt);
+
+    // Determine current local time in the selected city
+    const nowUtcSec = Math.floor(Date.now() / 1000);
+    const localMs = (nowUtcSec + timezoneOffset) * 1000;
+    const localDate = new Date(localMs);
+
+    const year = localDate.getUTCFullYear();
+    const month = localDate.getUTCMonth();
+    const date = localDate.getUTCDate();
+    const currentLocalHour = localDate.getUTCHours();
+
+    const hourlyResult = [];
+
+    // Generate 24 consecutive hourly forecast items starting from the current hour
+    for (let i = 0; i < 24; i++) {
+      const targetLocalDate = new Date(Date.UTC(year, month, date, currentLocalHour + i, 0, 0));
+      const targetUtcSec = Math.floor(targetLocalDate.getTime() / 1000) - timezoneOffset;
+
+      // Find closest point for weather condition description & icon
+      let closestPoint = points[0];
+      let minDiff = Math.abs(targetUtcSec - points[0].dt);
+
+      for (let p = 1; p < points.length; p++) {
+        const diff = Math.abs(targetUtcSec - points[p].dt);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestPoint = points[p];
+        }
+      }
+
+      // Interpolate temperature linearly between bounding forecast points
+      let interpolatedTemp = closestPoint.temp;
+      let p1 = null;
+      let p2 = null;
+
+      for (let p = 0; p < points.length; p++) {
+        if (points[p].dt <= targetUtcSec) {
+          if (!p1 || points[p].dt > p1.dt) {
+            p1 = points[p];
+          }
+        }
+        if (points[p].dt >= targetUtcSec) {
+          if (!p2 || points[p].dt < p2.dt) {
+            p2 = points[p];
+          }
+        }
+      }
+
+      if (p1 && p2 && p1.dt !== p2.dt) {
+        const ratio = (targetUtcSec - p1.dt) / (p2.dt - p1.dt);
+        const clampedRatio = Math.max(0, Math.min(1, ratio));
+        interpolatedTemp = p1.temp + (p2.temp - p1.temp) * clampedRatio;
+      } else if (p1) {
+        interpolatedTemp = p1.temp;
+      } else if (p2) {
+        interpolatedTemp = p2.temp;
+      }
+
+      hourlyResult.push({
+        dt: targetUtcSec,
+        isCurrentHour: i === 0,
+        temp: Math.round(interpolatedTemp * 10) / 10,
+        weather: closestPoint.weather,
+      });
+    }
+
+    return hourlyResult;
+  }, [forecastData, currentWeather, timezoneOffset, nowTick]);
 
   const dailyList = useMemo(() => {
     if (!forecastData?.list) return [];
@@ -90,7 +192,7 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
     }));
   }, [forecastData, timezoneOffset]);
 
-  if (!forecastData?.list) return null;
+  if (!forecastData?.list && !currentWeather) return null;
 
   return (
     <div
@@ -175,11 +277,12 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
       {/* 24-Hour Timeline View */}
       {viewMode === 'hourly' && (
         <div
+          className="snap-scroll-x"
           style={{
             display: 'flex',
-            gap: '0.75rem',
+            gap: '1rem',
             overflowX: 'auto',
-            paddingBottom: '0.75rem',
+            paddingBottom: '0.85rem',
             scrollbarWidth: 'thin',
           }}
         >
@@ -187,49 +290,72 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
             const condMain = item.weather?.[0]?.main || 'Clear';
             const iconCode = item.weather?.[0]?.icon || '01d';
             const itemTheme = getThemeForCondition(condMain, iconCode);
+            const isCurrent = item.isCurrentHour;
 
             return (
               <div
                 key={item.dt || idx}
                 className="metric-card"
                 style={{
-                  minWidth: '104px',
+                  minWidth: '130px',
                   flex: '0 0 auto',
                   textAlign: 'center',
-                  padding: '0.85rem 0.65rem',
+                  padding: '1.1rem 0.9rem',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '6px',
-                  borderRadius: 'var(--radius-lg)',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1.5px solid var(--card-border)',
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                  transition: 'transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease',
+                  gap: '8px',
+                  borderRadius: 'var(--radius-xl)',
+                  scrollSnapAlign: 'start',
+                  background: isCurrent
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.28), rgba(56, 189, 248, 0.15))'
+                    : 'rgba(255, 255, 255, 0.08)',
+                  border: isCurrent
+                    ? '2px solid var(--color-primary)'
+                    : '1.5px solid var(--card-border)',
+                  boxShadow: isCurrent
+                    ? '0 0 20px var(--color-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35)'
+                    : '0 4px 14px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                  transform: isCurrent ? 'scale(1.03)' : 'none',
+                  transition: 'transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease',
                 }}
               >
-                {/* Timeline label: "Now" for index 0, actual time (9 AM, 12 PM, 3 PM) for subsequent hours */}
-                <div style={{ fontSize: '0.82rem', color: '#FFFFFF', fontWeight: '700' }}>
-                  {formatHour(item.dt, timezoneOffset, idx === 0)}
+                {/* Timeline label */}
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    color: isCurrent ? 'var(--color-primary)' : '#FFFFFF',
+                    fontWeight: '800',
+                    whiteSpace: 'nowrap',
+                    padding: isCurrent ? '2px 8px' : 'none',
+                    borderRadius: isCurrent ? 'var(--radius-pill)' : 'none',
+                    background: isCurrent ? 'var(--badge-bg)' : 'transparent',
+                  }}
+                >
+                  {formatHour(item.dt, timezoneOffset, isCurrent)}
                 </div>
 
-                {/* Weather Icon (34px) */}
-                <div style={{ margin: '2px 0' }}>
-                  <AnimatedWeatherIcon themeKey={itemTheme.key} size={34} />
+                {/* Weather Icon (46px) */}
+                <div style={{ margin: '4px 0' }}>
+                  <AnimatedWeatherIcon themeKey={itemTheme.key} size={46} />
                 </div>
 
                 {/* Primary Temp */}
-                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFFFFF' }}>
-                  {formatTemp(item.main.temp, unit)}
+                <div style={{ fontSize: '1.35rem', fontWeight: '900', color: '#FFFFFF' }}>
+                  {formatTemp(item.temp, unit)}
                 </div>
 
                 {/* Description with dynamic condition color */}
                 <div
                   style={{
-                    fontSize: '0.72rem',
+                    fontSize: '0.75rem',
                     color: itemTheme.primary || 'var(--color-primary)',
                     textTransform: 'capitalize',
                     fontWeight: '600',
+                    maxWidth: '110px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {item.weather?.[0]?.description || condMain}
@@ -297,7 +423,7 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
                     style={{
                       fontSize: '0.88rem',
                       color: 'rgba(255, 255, 255, 0.75)',
-                      width: '45px',
+                      width: '55px',
                       textAlign: 'right',
                       fontWeight: '600',
                       flexShrink: 0,
@@ -337,7 +463,7 @@ export default function ForecastSection({ forecastData, timezoneOffset = 0 }) {
                       fontSize: '0.9rem',
                       fontWeight: '800',
                       color: '#FFFFFF',
-                      width: '45px',
+                      width: '55px',
                       textAlign: 'left',
                       flexShrink: 0,
                     }}

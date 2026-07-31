@@ -7,6 +7,13 @@ import { useThemeContext } from '../context/ThemeContext';
  * Manages fetching current weather, forecast, and air pollution data.
  * Architecture Rule: Always resolves and fetches weather data using latitude & longitude coordinates.
  */
+const apiCache = new Map();
+const CACHE_TTL_MS = 300000; // 5 minutes
+
+/**
+ * Custom Hook: useWeather
+ * Manages fetching current weather, forecast, and air pollution data with client caching.
+ */
 export function useWeather() {
   const { activeCity, apiKey } = useWeatherContext();
   const { updateCondition } = useThemeContext();
@@ -17,11 +24,8 @@ export function useWeather() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchWeatherData = useCallback(async () => {
+  const fetchWeatherData = useCallback(async (forceRefresh = false) => {
     if (!activeCity) return;
-
-    setLoading(true);
-    setError(null);
 
     const locationName = typeof activeCity === 'string' ? activeCity.trim() : activeCity.name;
     let targetLat = activeCity?.lat;
@@ -29,6 +33,32 @@ export function useWeather() {
     let resolvedState = activeCity?.state || '';
     let resolvedCountry = activeCity?.country || '';
     let resolvedName = locationName;
+
+    const cacheKey = `${targetLat}_${targetLon}_${locationName}_${apiKey}`;
+    const now = Date.now();
+
+    if (!forceRefresh && apiCache.has(cacheKey)) {
+      const cached = apiCache.get(cacheKey);
+      if (now - cached.timestamp < CACHE_TTL_MS) {
+        setCurrentWeather(cached.currentWeather);
+        setForecast(cached.forecast);
+        setPollution(cached.pollution);
+        setLoading(false);
+        setError(null);
+        if (cached.currentWeather?.weather?.[0]) {
+          updateCondition(
+            cached.currentWeather.weather[0].main,
+            cached.currentWeather.weather[0].icon,
+            cached.currentWeather.sys,
+            cached.currentWeather.dt
+          );
+        }
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError(null);
 
     try {
       // Step 1: If latitude and longitude are not directly available, resolve them via OpenWeather Geocoding API
@@ -50,7 +80,6 @@ export function useWeather() {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
 
-        // Use the first matching location result
         const primaryMatch = geoData[0];
         targetLat = primaryMatch.lat;
         targetLon = primaryMatch.lon;
@@ -59,7 +88,7 @@ export function useWeather() {
         resolvedCountry = primaryMatch.country || resolvedCountry;
       }
 
-      // Step 2: Fetch Current Weather strictly using Latitude and Longitude
+      // Step 2: Fetch Current Weather
       const weatherParams = new URLSearchParams({
         lat: targetLat,
         lon: targetLon,
@@ -73,7 +102,6 @@ export function useWeather() {
       }
       const weatherData = await weatherRes.json();
 
-      // Attach resolved place metadata (state, country, display name)
       if (resolvedState) weatherData.state = resolvedState;
       if (resolvedCountry) {
         if (!weatherData.sys) weatherData.sys = {};
@@ -83,7 +111,6 @@ export function useWeather() {
 
       setCurrentWeather(weatherData);
 
-      // Trigger dynamic UI theme transition based on condition and daylight
       if (weatherData.weather?.[0]) {
         updateCondition(
           weatherData.weather[0].main,
@@ -93,7 +120,7 @@ export function useWeather() {
         );
       }
 
-      // Step 3: Fetch 5-Day / 3-Hour Forecast using Latitude and Longitude
+      // Step 3: Fetch 5-Day / 3-Hour Forecast
       const forecastParams = new URLSearchParams({
         lat: targetLat,
         lon: targetLon,
@@ -101,13 +128,14 @@ export function useWeather() {
       if (resolvedName) forecastParams.append('city', resolvedName);
       if (apiKey) forecastParams.append('apiKey', apiKey);
 
+      let forecastData = null;
       const forecastRes = await fetch(`/api/weather/forecast?${forecastParams.toString()}`);
       if (forecastRes.ok) {
-        const forecastData = await forecastRes.json();
+        forecastData = await forecastRes.json();
         setForecast(forecastData);
       }
 
-      // Step 4: Fetch Air Pollution Index using Latitude and Longitude
+      // Step 4: Fetch Air Pollution Index
       const pollutionParams = new URLSearchParams({
         lat: targetLat,
         lon: targetLon,
@@ -115,11 +143,20 @@ export function useWeather() {
       if (resolvedName) pollutionParams.append('city', resolvedName);
       if (apiKey) pollutionParams.append('apiKey', apiKey);
 
+      let pollutionData = null;
       const pollutionRes = await fetch(`/api/weather/pollution?${pollutionParams.toString()}`);
       if (pollutionRes.ok) {
-        const pollutionData = await pollutionRes.json();
+        pollutionData = await pollutionRes.json();
         setPollution(pollutionData);
       }
+
+      // Save to client cache
+      apiCache.set(cacheKey, {
+        timestamp: Date.now(),
+        currentWeather: weatherData,
+        forecast: forecastData,
+        pollution: pollutionData,
+      });
 
     } catch (err) {
       console.error('Weather fetch error:', err);
@@ -142,7 +179,7 @@ export function useWeather() {
     pollution,
     loading,
     error,
-    refetch: fetchWeatherData,
+    refetch: () => fetchWeatherData(true),
   };
 }
 

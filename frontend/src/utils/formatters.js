@@ -12,7 +12,8 @@ export function convertTemp(celsius, unit = 'C') {
 
 export function formatTemp(celsius, unit = 'C') {
   const val = convertTemp(celsius, unit);
-  return `${val}°`;
+  if (val === '--') return '--';
+  return `${val}°${unit}`;
 }
 
 export function formatTime(unixTimestamp, timezoneOffsetSeconds = 0) {
@@ -109,11 +110,19 @@ export function formatDayName(unixTimestamp, timezoneOffsetSeconds = 0) {
   return `${weekdayStr}, ${dateStr}`;
 }
 
-export function formatHour(unixTimestamp, timezoneOffsetSeconds = 0, isFirst = false) {
+export function formatHour(unixTimestamp, timezoneOffsetSeconds = 0, isCurrentHour = false) {
   if (!unixTimestamp) return '';
-  if (isFirst === true) return 'Now';
   const date = new Date((unixTimestamp + timezoneOffsetSeconds) * 1000);
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'UTC' });
+  const formattedTime = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    hour12: true,
+    timeZone: 'UTC',
+  });
+
+  if (isCurrentHour) {
+    return `Now (${formattedTime})`;
+  }
+  return formattedTime;
 }
 
 export function getWindDirection(deg) {

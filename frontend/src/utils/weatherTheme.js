@@ -12,16 +12,35 @@ export const WEATHER_THEMES = {
     sky: '#38BDF8',            // Luminous Sky Cyan
     accent: '#FF7E5F',         // Warm Coral Sunbeam
     primaryGlow: 'rgba(245, 158, 11, 0.45)',
-    bgGradient: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 40%, #F59E0B 80%, #FBBF24 100%)',
-    cardBg: 'rgba(255, 255, 255, 0.18)',
-    cardBorder: 'rgba(255, 255, 255, 0.35)',
-    cardHoverBorder: 'rgba(255, 255, 255, 0.75)',
+    bgGradient: 'linear-gradient(135deg, #1C1917 0%, #78350F 35%, #D97706 70%, #FBBF24 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    cardBorder: 'rgba(254, 215, 170, 0.3)',
+    cardHoverBorder: 'rgba(251, 191, 36, 0.75)',
     ambientColor: 'rgba(251, 191, 36, 0.45)',
-    ambientSecondary: 'rgba(56, 189, 248, 0.35)',
+    ambientSecondary: 'rgba(245, 158, 11, 0.25)',
     textColor: '#FFFFFF',
     textSecondary: 'rgba(255, 255, 255, 0.9)',
     badgeBg: 'rgba(245, 158, 11, 0.3)',
     badgeText: '#FFFBEB',
+  },
+  SunriseSunset: {
+    key: 'SunriseSunset',
+    name: 'Sunrise / Sunset',
+    emoji: '🌅',
+    primary: '#F97316',        // Golden Orange
+    sky: '#EC4899',            // Warm Pink
+    accent: '#F43F5E',         // Coral Sun Glow
+    primaryGlow: 'rgba(249, 115, 22, 0.5)',
+    bgGradient: 'linear-gradient(135deg, #2E1065 0%, #7C2D12 40%, #DB2777 75%, #F97316 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.15)',
+    cardBorder: 'rgba(251, 146, 60, 0.35)',
+    cardHoverBorder: 'rgba(244, 63, 94, 0.75)',
+    ambientColor: 'rgba(249, 115, 22, 0.45)',
+    ambientSecondary: 'rgba(219, 39, 119, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.9)',
+    badgeBg: 'rgba(249, 115, 22, 0.3)',
+    badgeText: '#FFF7ED',
   },
   PartlyCloudy: {
     key: 'PartlyCloudy',
@@ -31,9 +50,9 @@ export const WEATHER_THEMES = {
     sky: '#60A5FA',            // Bright Sky Blue
     accent: '#F59E0B',         // Warm Sun Accent
     primaryGlow: 'rgba(56, 189, 248, 0.4)',
-    bgGradient: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 40%, #60A5FA 75%, #93C5FD 100%)',
-    cardBg: 'rgba(255, 255, 255, 0.16)',
-    cardBorder: 'rgba(255, 255, 255, 0.32)',
+    bgGradient: 'linear-gradient(135deg, #0C4A6E 0%, #0284C7 40%, #38BDF8 75%, #93C5FD 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    cardBorder: 'rgba(255, 255, 255, 0.3)',
     cardHoverBorder: 'rgba(56, 189, 248, 0.7)',
     ambientColor: 'rgba(56, 189, 248, 0.38)',
     ambientSecondary: 'rgba(147, 197, 253, 0.25)',
@@ -50,7 +69,7 @@ export const WEATHER_THEMES = {
     sky: '#64748B',            // Slate Blue Gray
     accent: '#38BDF8',         // Soft Sky Accent
     primaryGlow: 'rgba(148, 163, 184, 0.35)',
-    bgGradient: 'linear-gradient(135deg, #1E293B 0%, #334155 40%, #475569 75%, #94A3B8 100%)',
+    bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #334155 75%, #64748B 100%)',
     cardBg: 'rgba(255, 255, 255, 0.12)',
     cardBorder: 'rgba(203, 213, 225, 0.25)',
     cardHoverBorder: 'rgba(226, 232, 240, 0.6)',
@@ -69,7 +88,7 @@ export const WEATHER_THEMES = {
     sky: '#0284C7',            // Deep Rain Blue
     accent: '#60A5FA',         // Splash Highlight
     primaryGlow: 'rgba(14, 165, 233, 0.45)',
-    bgGradient: 'linear-gradient(135deg, #0B192C 0%, #1E3A8A 40%, #0284C7 75%, #0EA5E9 100%)',
+    bgGradient: 'linear-gradient(135deg, #030712 0%, #0F172A 40%, #1E3A8A 75%, #0284C7 100%)',
     cardBg: 'rgba(15, 23, 42, 0.55)',
     cardBorder: 'rgba(56, 189, 248, 0.3)',
     cardHoverBorder: 'rgba(56, 189, 248, 0.7)',
@@ -88,7 +107,7 @@ export const WEATHER_THEMES = {
     sky: '#A855F7',            // Deep Purple Glow
     accent: '#22D3EE',         // Electric Cyan Spark
     primaryGlow: 'rgba(192, 132, 252, 0.5)',
-    bgGradient: 'linear-gradient(135deg, #1E1B4B 0%, #3B0764 40%, #581C87 75%, #7E22CE 100%)',
+    bgGradient: 'linear-gradient(135deg, #090514 0%, #2E1065 40%, #581C87 75%, #7E22CE 100%)',
     cardBg: 'rgba(24, 9, 38, 0.65)',
     cardBorder: 'rgba(192, 132, 252, 0.35)',
     cardHoverBorder: 'rgba(192, 132, 252, 0.8)',
@@ -107,8 +126,8 @@ export const WEATHER_THEMES = {
     sky: '#7DD3FC',            // Frost White-Blue
     accent: '#F0F9FF',         // Crisp Snowfall Sparkle
     primaryGlow: 'rgba(186, 230, 253, 0.5)',
-    bgGradient: 'linear-gradient(135deg, #0369A1 0%, #0284C7 35%, #38BDF8 70%, #BAE6FD 100%)',
-    cardBg: 'rgba(255, 255, 255, 0.2)',
+    bgGradient: 'linear-gradient(135deg, #082F49 0%, #0369A1 40%, #38BDF8 75%, #BAE6FD 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.18)',
     cardBorder: 'rgba(224, 242, 254, 0.4)',
     cardHoverBorder: 'rgba(186, 230, 253, 0.8)',
     ambientColor: 'rgba(186, 230, 253, 0.4)',
@@ -126,7 +145,7 @@ export const WEATHER_THEMES = {
     sky: '#94A3B8',            // Soft Misty Gray
     accent: '#64748B',         // Deep Slate Haze
     primaryGlow: 'rgba(203, 213, 225, 0.35)',
-    bgGradient: 'linear-gradient(135deg, #27272A 0%, #3F3F46 40%, #52525B 75%, #71717A 100%)',
+    bgGradient: 'linear-gradient(135deg, #18181B 0%, #27272A 40%, #3F3F46 75%, #71717A 100%)',
     cardBg: 'rgba(255, 255, 255, 0.12)',
     cardBorder: 'rgba(161, 161, 170, 0.25)',
     cardHoverBorder: 'rgba(203, 213, 225, 0.55)',
@@ -164,20 +183,36 @@ const ATMOSPHERE_TYPES = ['Mist', 'Smoke', 'Haze', 'Dust', 'Fog', 'Sand', 'Ash',
  * Determine weather theme key based on condition string, OpenWeather icon code, and optional sys sunrise/sunset
  */
 export function getThemeForCondition(conditionMain, iconCode = '', sys = null, dt = null) {
-  // Check Night mode first if iconCode ends with 'n' or current time is outside sunrise/sunset
   let isNight = false;
-  if (iconCode && iconCode.endsWith('n')) {
+  let isSunriseSunset = false;
+
+  const nowSec = dt || Math.floor(Date.now() / 1000);
+
+  if (sys && sys.sunrise && sys.sunset) {
+    const sr = sys.sunrise;
+    const ss = sys.sunset;
+    const margin = 2700; // 45 minutes in seconds
+
+    if (Math.abs(nowSec - sr) <= margin || Math.abs(nowSec - ss) <= margin) {
+      isSunriseSunset = true;
+    }
+
+    if (nowSec < sr || nowSec > ss) {
+      isNight = true;
+    }
+  } else if (iconCode && iconCode.endsWith('n')) {
     isNight = true;
   } else if (iconCode && iconCode.endsWith('d')) {
     isNight = false;
-  } else if (sys && sys.sunrise && sys.sunset && dt) {
-    if (dt < sys.sunrise || dt > sys.sunset) {
-      isNight = true;
-    }
   }
 
   const condLower = (conditionMain || '').toLowerCase();
   const iconLower = (iconCode || '').toLowerCase();
+
+  // If near sunrise/sunset and clear or partly cloudy
+  if (isSunriseSunset && (condLower === 'clear' || condLower === 'clouds' || iconLower.startsWith('01') || iconLower.startsWith('02'))) {
+    return WEATHER_THEMES.SunriseSunset;
+  }
 
   // If night and clear/partly cloudy, trigger Night theme
   if (isNight && (condLower === 'clear' || condLower === 'clouds' || iconLower === '01n' || iconLower === '02n')) {

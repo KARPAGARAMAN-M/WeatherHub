@@ -48,6 +48,9 @@ function SavedCityCard({ cityObj, isSelected }) {
   const countryName = getCountryName(cityObj.country || data?.sys?.country || '');
   const subLocation = [cityObj.state, countryName].filter(Boolean).join(', ');
 
+  const tempMax = data?.main?.temp_max != null ? data.main.temp_max : (data?.main?.temp != null ? data.main.temp + 2 : null);
+  const tempMin = data?.main?.temp_min != null ? data.main.temp_min : (data?.main?.temp != null ? data.main.temp - 2 : null);
+
   return (
     <div
       className="metric-card animate-slideUp"
@@ -55,21 +58,29 @@ function SavedCityCard({ cityObj, isSelected }) {
         cursor: 'pointer',
         border: isSelected
           ? '2px solid var(--color-primary)'
+          : isHovered
+          ? '1.5px solid var(--card-border-hover)'
           : '1px solid var(--card-border)',
-        boxShadow: isSelected ? '0 0 16px var(--color-primary-glow)' : 'var(--shadow-glass)',
+        boxShadow: isSelected
+          ? '0 0 20px var(--color-primary-glow)'
+          : isHovered
+          ? '0 8px 25px rgba(0,0,0,0.4), 0 0 14px var(--color-primary-glow)'
+          : 'var(--shadow-glass)',
+        transform: isHovered ? 'translateY(-4px) scale(1.02)' : 'none',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        minHeight: '135px',
-        padding: '1.1rem',
-        transition: 'all 300ms ease',
+        minHeight: '145px',
+        padding: '1.15rem',
+        borderRadius: 'var(--radius-xl)',
+        transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       onClick={() => setActiveCity(cityObj)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Remove Button */}
+      {/* Delete / Remove Location Button */}
       <button
         type="button"
         onClick={(e) => {
@@ -80,50 +91,69 @@ function SavedCityCard({ cityObj, isSelected }) {
           position: 'absolute',
           top: '10px',
           right: '10px',
-          background: 'rgba(0,0,0,0.3)',
-          border: 'none',
+          background: 'rgba(0,0,0,0.4)',
+          border: '1px solid rgba(255,255,255,0.15)',
           borderRadius: '50%',
-          width: '24px',
-          height: '24px',
+          width: '26px',
+          height: '26px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'var(--color-text-secondary)',
           cursor: 'pointer',
-          opacity: isHovered ? 1 : 0,
+          opacity: isHovered ? 1 : 0.6,
           transition: 'all 200ms ease',
+          zIndex: 2,
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
-        title="Remove location"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = '#FFFFFF';
+          e.currentTarget.style.background = '#EF4444';
+          e.currentTarget.style.borderColor = '#EF4444';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--color-text-secondary)';
+          e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+        }}
+        title="Delete saved location"
       >
         <X size={14} />
       </button>
 
-      {/* City & Country */}
+      {/* City & Location details */}
       <div>
-        <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--color-text)', paddingRight: '24px' }}>
+        <div style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--color-text)', paddingRight: '24px' }}>
           {cityObj.name}
         </div>
-        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
+        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
           <MapPin size={12} style={{ color: 'var(--color-primary)' }} />
           {subLocation || 'Global'}
         </div>
       </div>
 
-      {/* Weather Info & Animated Icon */}
+      {/* Weather Info, High/Low Temps & Animated Icon */}
       {loading ? (
         <div style={{ marginTop: '12px' }}>
-          <div className="skeleton" style={{ width: '60px', height: '24px' }} />
+          <div className="skeleton" style={{ width: '70px', height: '24px', marginBottom: '6px' }} />
+          <div className="skeleton" style={{ width: '90px', height: '14px' }} />
         </div>
       ) : error ? (
         <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: '12px' }}>--</div>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--color-text)', lineHeight: 1 }}>
-            {formatTemp(data?.main?.temp, unit)}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '12px' }}>
+          <div>
+            <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--color-text)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {formatTemp(data?.main?.temp, unit)}
+            </div>
+            {/* Today's High and Low Temps */}
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '6px', fontWeight: '600' }}>
+              H: {formatTemp(tempMax, unit)} • L: {formatTemp(tempMin, unit)}
+            </div>
           </div>
-          <AnimatedWeatherIcon themeKey={cityTheme.key} size={42} />
+
+          <div style={{ marginBottom: '-4px' }}>
+            <AnimatedWeatherIcon themeKey={cityTheme.key} size={46} />
+          </div>
         </div>
       )}
     </div>

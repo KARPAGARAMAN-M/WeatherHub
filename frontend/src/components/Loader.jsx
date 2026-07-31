@@ -7,13 +7,14 @@ export function WeatherLoader() {
       {/* Hero skeleton */}
       <div className="surface-card" style={{ padding: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <div className="skeleton" style={{ width: '200px', height: '28px', marginBottom: '12px' }} />
-            <div className="skeleton" style={{ width: '150px', height: '16px', marginBottom: '24px' }} />
-            <div className="skeleton" style={{ width: '180px', height: '70px', marginBottom: '12px' }} />
-            <div className="skeleton" style={{ width: '140px', height: '16px' }} />
+          <div style={{ flex: 1, minWidth: '240px' }}>
+            <div className="skeleton" style={{ width: '220px', height: '32px', marginBottom: '14px' }} />
+            <div className="skeleton" style={{ width: '180px', height: '16px', marginBottom: '24px' }} />
+            <div className="skeleton" style={{ width: '200px', height: '80px', marginBottom: '14px' }} />
+            <div className="skeleton" style={{ width: '160px', height: '18px' }} />
           </div>
-          <div className="skeleton" style={{ width: '130px', height: '130px', borderRadius: '50%' }} />
+          {/* WeatherIllustration right side skeleton */}
+          <div className="skeleton" style={{ width: '300px', height: '200px', borderRadius: 'var(--radius-xl)' }} />
         </div>
       </div>
 
@@ -27,7 +28,10 @@ export function WeatherLoader() {
       >
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="metric-card">
-            <div className="skeleton" style={{ width: '70px', height: '12px', marginBottom: '16px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div className="skeleton" style={{ width: '70px', height: '12px' }} />
+              <div className="skeleton" style={{ width: '34px', height: '34px', borderRadius: '50%' }} />
+            </div>
             <div className="skeleton" style={{ width: '90px', height: '26px', marginBottom: '8px' }} />
             <div className="skeleton" style={{ width: '60px', height: '12px' }} />
           </div>
@@ -36,13 +40,13 @@ export function WeatherLoader() {
 
       {/* Forecast skeleton */}
       <div className="surface-card" style={{ padding: '1.75rem' }}>
-        <div className="skeleton" style={{ width: '150px', height: '20px', marginBottom: '1.25rem' }} />
-        <div style={{ display: 'flex', gap: '0.75rem', overflow: 'hidden' }}>
+        <div className="skeleton" style={{ width: '160px', height: '24px', marginBottom: '1.25rem' }} />
+        <div style={{ display: 'flex', gap: '1rem', overflow: 'hidden' }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="metric-card" style={{ minWidth: '100px', padding: '1rem 0.75rem', textAlign: 'center' }}>
-              <div className="skeleton" style={{ width: '45px', height: '12px', margin: '0 auto 10px' }} />
-              <div className="skeleton" style={{ width: '42px', height: '42px', borderRadius: '50%', margin: '0 auto 10px' }} />
-              <div className="skeleton" style={{ width: '40px', height: '18px', margin: '0 auto' }} />
+            <div key={i} className="metric-card" style={{ minWidth: '130px', padding: '1.1rem 0.9rem', textAlign: 'center' }}>
+              <div className="skeleton" style={{ width: '55px', height: '14px', margin: '0 auto 12px' }} />
+              <div className="skeleton" style={{ width: '46px', height: '46px', borderRadius: '50%', margin: '0 auto 12px' }} />
+              <div className="skeleton" style={{ width: '50px', height: '22px', margin: '0 auto' }} />
             </div>
           ))}
         </div>
