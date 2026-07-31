@@ -1,26 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — WeatherHub Modern Dynamic Theme
+   DESIGN SYSTEM — WeatherHub Premium Glassmorphism Theme
    ═══════════════════════════════════════════════════ */
 
 :root {
   /* Default dynamic variables (Overridden by applyThemeToDOM with 500ms transitions) */
-  --color-primary: #F59E0B;
-  --color-sky: #FBBF24;
-  --color-accent: #FF7E5F;
-  --color-primary-glow: rgba(245, 158, 11, 0.4);
-  --bg-gradient: linear-gradient(135deg, #1C0A00 0%, #78350F 35%, #D97706 70%, #FBBF24 100%);
-  --card-bg: rgba(255, 247, 237, 0.12);
-  --card-border: rgba(254, 215, 170, 0.25);
-  --card-border-hover: rgba(245, 158, 11, 0.6);
-  --ambient-color: rgba(251, 191, 36, 0.35);
-  --ambient-secondary: rgba(245, 158, 11, 0.2);
+  --color-primary: #FBBF24;
+  --color-sky: #38BDF8;
+  --color-accent: #0EA5E9;
+  --color-primary-glow: rgba(251, 191, 36, 0.45);
+  --bg-gradient: linear-gradient(135deg, #0EA5E9 0%, #0284C7 35%, #38BDF8 70%, #7DD3FC 100%);
+  --card-bg: rgba(255, 255, 255, 0.16);
+  --card-border: rgba(255, 255, 255, 0.35);
+  --card-border-hover: rgba(251, 191, 36, 0.8);
+  --ambient-color: rgba(251, 191, 36, 0.45);
+  --ambient-secondary: rgba(14, 165, 233, 0.3);
   --color-text: #FFFFFF;
-  --color-text-secondary: rgba(255, 255, 255, 0.82);
-  --color-text-muted: rgba(255, 255, 255, 0.6);
-  --badge-bg: rgba(245, 158, 11, 0.25);
-  --badge-text: #FDE68A;
+  --color-text-secondary: rgba(255, 255, 255, 0.9);
+  --color-text-muted: rgba(255, 255, 255, 0.65);
+  --badge-bg: rgba(251, 191, 36, 0.28);
+  --badge-text: #FFFBEB;
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -34,10 +34,10 @@
 
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --shadow-glass-hover: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-  --shadow-dropdown: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px var(--color-primary-glow);
+  --shadow-dropdown: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px var(--color-primary-glow);
 
   /* Glassmorphism Blur */
-  --glass-blur: blur(16px) saturate(180%);
+  --glass-blur: blur(18px) saturate(180%);
   --glass-blur-heavy: blur(24px) saturate(200%);
 }
 
@@ -61,8 +61,8 @@ body {
   background: transparent;
   min-height: 100vh;
   overflow-x: hidden;
-  /* 500ms Smooth transitions */
-  transition: color 500ms ease-in-out;
+  /* 500ms Smooth transitions when weather theme changes */
+  transition: color 500ms ease-in-out, background 500ms ease-in-out;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -104,16 +104,16 @@ header {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: background 600ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 600ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 600ms cubic-bezier(0.16, 1, 0.3, 1),
+  box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: background 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 500ms cubic-bezier(0.16, 1, 0.3, 1),
               transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .surface-card:hover {
   border-color: var(--card-border-hover);
-  box-shadow: var(--shadow-glass-hover), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: var(--shadow-glass-hover), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .metric-card {
@@ -123,9 +123,9 @@ header {
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: background 600ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 600ms cubic-bezier(0.16, 1, 0.3, 1),
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: background 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
               transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -133,7 +133,7 @@ header {
 .metric-card:hover {
   border-color: var(--card-border-hover);
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px var(--color-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 25px var(--color-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -167,9 +167,9 @@ header {
 }
 
 .btn-icon {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--card-border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   color: var(--color-text-secondary);
   width: 44px;
   height: 44px;
@@ -182,16 +182,16 @@ header {
 }
 
 .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   color: var(--color-primary);
   border-color: var(--color-primary);
   transform: scale(1.05);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--card-border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   color: var(--color-text-secondary);
   font-family: var(--font-family);
   font-weight: 600;
@@ -206,7 +206,7 @@ header {
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   color: var(--color-text);
   border-color: var(--color-primary);
 }
@@ -230,14 +230,14 @@ header {
 
 .search-input {
   width: 100%;
-  height: 50px; /* 48-52px tall requirement */
+  height: 50px;
   background: rgba(15, 23, 42, 0.55);
   border: 1.5px solid var(--card-border);
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   color: var(--color-text);
-  padding: 0 2.85rem 0 3rem; /* Left icon offset & right clear button offset */
-  border-radius: var(--radius-lg); /* 18px rounded corners */
+  padding: 0 2.85rem 0 3rem;
+  border-radius: var(--radius-lg);
   font-family: var(--font-family);
   font-size: 0.98rem;
   font-weight: 500;
@@ -260,7 +260,7 @@ header {
 /* Floating Glassmorphic Autocomplete Dropdown */
 .search-dropdown {
   position: absolute;
-  top: calc(100% + 10px); /* 10px floating gap */
+  top: calc(100% + 10px);
   left: 0;
   right: 0;
   background: rgba(15, 23, 42, 0.88);
@@ -269,7 +269,7 @@ header {
   -webkit-backdrop-filter: blur(20px) saturate(190%);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-dropdown);
-  z-index: 9999; /* Layering above all other components */
+  z-index: 9999;
   overflow: hidden;
   max-height: 320px;
   overflow-y: auto;
@@ -334,60 +334,6 @@ header {
 .settings-input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-glow);
-}
-
-/* ═══════════════════════════════════════════════════
-   THEME PREVIEW SWITCHER (Interactive Toolbar)
-   ═══════════════════════════════════════════════════ */
-
-.theme-switcher-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(12px);
-  border-radius: var(--radius-pill);
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-width: 100%;
-}
-
-.theme-switcher-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.theme-chip {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--color-text-secondary);
-  font-family: var(--font-family);
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  transition: all 250ms ease;
-}
-
-.theme-chip:hover {
-  color: var(--color-text);
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
-}
-
-.theme-chip.active {
-  background: var(--color-primary);
-  color: #0F172A;
-  font-weight: 800;
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 14px var(--color-primary-glow);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -550,12 +496,12 @@ header {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .hide-mobile {

@@ -2,15 +2,18 @@ import React from 'react';
 import { useThemeContext } from '../context/ThemeContext';
 
 /**
- * Modern SVG Animated Weather Icons for 8 Dynamic Themes:
- * - Clear (Sunny)
- * - PartlyCloudy
+ * Modern SVG Animated Weather Icons for 11 Dynamic Themes:
+ * - Clear (Clear Day)
+ * - Night (Clear Night)
  * - Clouds (Cloudy)
+ * - PartlyCloudy (Partly Cloudy)
  * - Rain
  * - Thunderstorm
  * - Snow
- * - Mist (Fog)
- * - Night
+ * - Mist (Mist / Fog)
+ * - Windy
+ * - Sunrise
+ * - Sunset
  */
 export default function AnimatedWeatherIcon({ themeKey, size = 120, className = '' }) {
   const { theme } = useThemeContext();
@@ -27,7 +30,7 @@ export default function AnimatedWeatherIcon({ themeKey, size = 120, className = 
   switch (activeKey) {
     case 'Clear':
       return (
-        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Clear / Sunny">
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Clear Day">
           <svg viewBox="0 0 100 100" width="100%" height="100%">
             <defs>
               <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
@@ -62,6 +65,113 @@ export default function AnimatedWeatherIcon({ themeKey, size = 120, className = 
               {/* Sun Core */}
               <circle cx="0" cy="0" r="26" fill="url(#sunGlow)" filter="url(#glow)" />
               <circle cx="0" cy="0" r="20" fill="#F59E0B" />
+            </g>
+          </svg>
+        </div>
+      );
+
+    case 'Sunrise':
+      return (
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Sunrise">
+          <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <defs>
+              <linearGradient id="sunriseSun" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#FDE047" />
+                <stop offset="60%" stopColor="#FB923C" />
+                <stop offset="100%" stopColor="#EA580C" />
+              </linearGradient>
+            </defs>
+
+            {/* Rising Sun Core */}
+            <g transform="translate(50, 48)">
+              <circle cx="0" cy="0" r="22" fill="url(#sunriseSun)" />
+              {[ -60, -30, 0, 30, 60 ].map((deg, i) => (
+                <line
+                  key={i}
+                  x1="0" y1="-28"
+                  x2="0" y2="-36"
+                  stroke="#FDE047"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  transform={`rotate(${deg})`}
+                />
+              ))}
+            </g>
+
+            {/* Horizon Line Curves */}
+            <path
+              d="M10 74 Q 50 68 90 74"
+              stroke="rgba(255, 255, 255, 0.8)"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      );
+
+    case 'Sunset':
+      return (
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Sunset">
+          <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <defs>
+              <linearGradient id="sunsetSun" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#F97316" />
+                <stop offset="60%" stopColor="#E11D48" />
+                <stop offset="100%" stopColor="#701A75" />
+              </linearGradient>
+            </defs>
+
+            {/* Setting Sun Core */}
+            <g transform="translate(50, 52)">
+              <circle cx="0" cy="0" r="22" fill="url(#sunsetSun)" />
+              {[ -50, -25, 0, 25, 50 ].map((deg, i) => (
+                <line
+                  key={i}
+                  x1="0" y1="-28"
+                  x2="0" y2="-35"
+                  stroke="#F97316"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  transform={`rotate(${deg})`}
+                />
+              ))}
+            </g>
+
+            {/* Horizon Line Curves */}
+            <path
+              d="M10 76 Q 50 70 90 76"
+              stroke="rgba(255, 255, 255, 0.8)"
+              strokeWidth="3.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      );
+
+    case 'Windy':
+      return (
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Windy">
+          <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <defs>
+              <linearGradient id="windCloud" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#E0F2FE" />
+                <stop offset="100%" stopColor="#38BDF8" />
+              </linearGradient>
+            </defs>
+
+            {/* Blowing Breeze Streams */}
+            <g stroke="#E0F2FE" strokeWidth="3.5" fill="none" strokeLinecap="round">
+              <path d="M12 36 Q 55 32 75 36 A 6 6 0 1 0 75 26" opacity="0.95">
+                <animate attributeName="stroke-dashoffset" values="0;20;0" dur="2.5s" repeatCount="indefinite" />
+              </path>
+              <path d="M22 52 Q 62 48 85 52 A 6 6 0 1 0 85 42" opacity="0.85">
+                <animate attributeName="stroke-dashoffset" values="0;-20;0" dur="2s" repeatCount="indefinite" />
+              </path>
+              <path d="M15 68 Q 45 64 65 68 A 5 5 0 1 0 65 60" opacity="0.9">
+                <animate attributeName="stroke-dashoffset" values="0;15;0" dur="3s" repeatCount="indefinite" />
+              </path>
             </g>
           </svg>
         </div>
@@ -143,7 +253,7 @@ export default function AnimatedWeatherIcon({ themeKey, size = 120, className = 
 
     case 'Rain':
       return (
-        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Rainy">
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Rain">
           <svg viewBox="0 0 100 100" width="100%" height="100%">
             <defs>
               <linearGradient id="rainCloud" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -223,7 +333,7 @@ export default function AnimatedWeatherIcon({ themeKey, size = 120, className = 
 
     case 'Snow':
       return (
-        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Snowy">
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Snow">
           <svg viewBox="0 0 100 100" width="100%" height="100%">
             <defs>
               <linearGradient id="snowCloud" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -308,7 +418,7 @@ export default function AnimatedWeatherIcon({ themeKey, size = 120, className = 
     case 'Night':
     default:
       return (
-        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Night">
+        <div style={styleObj} className={`weather-icon-svg ${className}`} title="Clear Night">
           <svg viewBox="0 0 100 100" width="100%" height="100%">
             <defs>
               <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">

@@ -4,15 +4,18 @@ import { useThemeContext } from '../context/ThemeContext';
 /**
  * WeatherEffects Component
  * Dynamic Background Animation & Dual-Layer Gradient Cross-Fade Engine:
- * - 800ms Butter-Smooth Background Cross-Fade between all weather condition transitions
- * - Clear: Sunbeam glow + warm ambient orbs
- * - PartlyCloudy: Floating sky clouds
- * - Clouds: Rolling cloud deck
+ * - 600–800ms Butter-Smooth Background Cross-Fade between all weather condition transitions
+ * - Clear Day: Sunbeam glow + warm amber ambient orbs + subtle cloud floaters
+ * - Clear Night: Canvas twinkling starfield + moon glow
+ * - Clouds: Rolling cloud deck particles + misty overlays
+ * - PartlyCloudy: Floating clouds + sunbeam glow
  * - Rain: Canvas animated falling rain & splash droplets
  * - Thunderstorm: Canvas rain + random lightning flash generator
- * - Snow: Canvas swaying snowflakes
- * - Mist: Drifting fog overlays
- * - Night: Canvas twinkling starfield + moon glow
+ * - Snow: Canvas swaying snowflakes with gentle drift
+ * - Mist/Fog: Drifting fog overlays & soft grey haze
+ * - Windy: Flowing breeze lines & sweeping wind particles
+ * - Sunrise: Peach/orange/pink horizon sunlight glow
+ * - Sunset: Orange/magenta/purple sunset lighting
  */
 export default function WeatherEffects() {
   const { theme } = useThemeContext();
@@ -20,7 +23,7 @@ export default function WeatherEffects() {
   const activeKey = theme?.key || 'Clear';
 
   // --- Dual Layer Background Cross-Fade Engine ---
-  const initialGrad = theme?.bgGradient || 'linear-gradient(135deg, #0284C7 0%, #38BDF8 40%, #F59E0B 80%, #FBBF24 100%)';
+  const initialGrad = theme?.bgGradient || 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 35%, #38BDF8 70%, #7DD3FC 100%)';
   const [bgLayers, setBgLayers] = useState({
     activeLayer: 'A',
     gradA: initialGrad,
@@ -59,7 +62,6 @@ export default function WeatherEffects() {
     const h = canvas.height;
 
     // --- 1. Rain & Thunderstorm Particles ---
-    // --- 1. Rain & Thunderstorm Particles ---
     const rainCount = activeKey === 'Thunderstorm' ? 140 : 90;
     const drops = Array.from({ length: rainCount }, () => ({
       x: Math.random() * w,
@@ -70,7 +72,7 @@ export default function WeatherEffects() {
     }));
 
     // --- 2. Snow Particles ---
-    const snowCount = 75;
+    const snowCount = 80;
     const snowflakes = Array.from({ length: snowCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -81,7 +83,7 @@ export default function WeatherEffects() {
     }));
 
     // --- 3. Night Starfield Particles ---
-    const starCount = 110;
+    const starCount = 120;
     const stars = Array.from({ length: starCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -91,31 +93,42 @@ export default function WeatherEffects() {
     }));
 
     // --- 4. Moving Cloud Particles for Daytime & Cloudy ---
-    const cloudCount = 6;
+    const cloudCount = 7;
     const canvasClouds = Array.from({ length: cloudCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * (h * 0.35),
-      r: Math.random() * 60 + 50,
-      speed: Math.random() * 0.3 + 0.15,
-      opacity: Math.random() * 0.15 + 0.08,
+      r: Math.random() * 65 + 45,
+      speed: Math.random() * 0.35 + 0.15,
+      opacity: Math.random() * 0.16 + 0.07,
     }));
 
-    // --- 5. Daytime Sun Glow Aura animation angle ---
+    // --- 5. Flowing Wind Breeze Particles ---
+    const windCount = 35;
+    const windLines = Array.from({ length: windCount }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      length: Math.random() * 120 + 60,
+      speed: Math.random() * 6 + 4,
+      opacity: Math.random() * 0.35 + 0.15,
+      thickness: Math.random() * 2 + 1,
+    }));
+
+    // Daytime / Horizon Glow angle
     let sunAngle = 0;
 
-    // --- Lightning Flash state ---
+    // Lightning Flash state
     let lightningOpacity = 0;
     let nextFlashTimer = Math.floor(Math.random() * 180) + 90;
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // --- Draw Moving Clouds for Cloudy / PartlyCloudy / Rain ---
-      if (activeKey === 'Clouds' || activeKey === 'PartlyCloudy' || activeKey === 'Rain') {
+      // --- Draw Moving Clouds for Clear / Cloudy / PartlyCloudy / Rain ---
+      if (activeKey === 'Clouds' || activeKey === 'PartlyCloudy' || activeKey === 'Rain' || activeKey === 'Clear') {
         ctx.fillStyle = '#FFFFFF';
         canvasClouds.forEach((cl) => {
           ctx.beginPath();
-          ctx.globalAlpha = cl.opacity;
+          ctx.globalAlpha = activeKey === 'Clear' ? cl.opacity * 0.6 : cl.opacity;
           ctx.arc(cl.x, cl.y, cl.r, 0, Math.PI * 2);
           ctx.arc(cl.x + cl.r * 0.5, cl.y - cl.r * 0.2, cl.r * 0.7, 0, Math.PI * 2);
           ctx.arc(cl.x - cl.r * 0.5, cl.y, cl.r * 0.6, 0, Math.PI * 2);
@@ -129,17 +142,27 @@ export default function WeatherEffects() {
         });
       }
 
-      // --- Gentle Sun Glow during Daytime / Clear / SunriseSunset ---
-      if (activeKey === 'Clear' || activeKey === 'SunriseSunset') {
+      // --- Gentle Sun Glow during Daytime / Clear / Sunrise / Sunset ---
+      if (activeKey === 'Clear' || activeKey === 'Sunrise' || activeKey === 'Sunset') {
         sunAngle += 0.005;
-        const sunX = canvas.width * 0.8;
-        const sunY = canvas.height * 0.2;
-        const sunRadius = 160 + Math.sin(sunAngle) * 20;
+        const sunX = activeKey === 'Sunrise' ? canvas.width * 0.2 : canvas.width * 0.8;
+        const sunY = activeKey === 'Sunrise' || activeKey === 'Sunset' ? canvas.height * 0.35 : canvas.height * 0.2;
+        const sunRadius = 170 + Math.sin(sunAngle) * 20;
 
         const sunGrad = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, sunRadius);
-        sunGrad.addColorStop(0, activeKey === 'SunriseSunset' ? 'rgba(249, 115, 22, 0.35)' : 'rgba(251, 191, 36, 0.35)');
-        sunGrad.addColorStop(0.5, activeKey === 'SunriseSunset' ? 'rgba(219, 39, 119, 0.15)' : 'rgba(245, 158, 11, 0.15)');
-        sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        if (activeKey === 'Sunrise') {
+          sunGrad.addColorStop(0, 'rgba(251, 146, 60, 0.4)');
+          sunGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.2)');
+          sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        } else if (activeKey === 'Sunset') {
+          sunGrad.addColorStop(0, 'rgba(249, 115, 22, 0.42)');
+          sunGrad.addColorStop(0.5, 'rgba(192, 38, 211, 0.22)');
+          sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        } else {
+          sunGrad.addColorStop(0, 'rgba(251, 191, 36, 0.38)');
+          sunGrad.addColorStop(0.5, 'rgba(14, 165, 233, 0.18)');
+          sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        }
 
         ctx.fillStyle = sunGrad;
         ctx.globalAlpha = 0.85;
@@ -148,8 +171,27 @@ export default function WeatherEffects() {
         ctx.fill();
       }
 
+      // --- Flowing Wind Stream Animation ---
+      if (activeKey === 'Windy') {
+        ctx.strokeStyle = '#E0F2FE';
+        windLines.forEach((wLine) => {
+          ctx.beginPath();
+          ctx.lineWidth = wLine.thickness;
+          ctx.globalAlpha = wLine.opacity;
+          ctx.moveTo(wLine.x, wLine.y);
+          ctx.quadraticCurveTo(wLine.x + wLine.length * 0.5, wLine.y - 8, wLine.x + wLine.length, wLine.y);
+          ctx.stroke();
+
+          wLine.x += wLine.speed;
+          if (wLine.x > canvas.width) {
+            wLine.x = -wLine.length;
+            wLine.y = Math.random() * canvas.height;
+          }
+        });
+      }
+
+      // --- Rain & Thunderstorm ---
       if (activeKey === 'Rain' || activeKey === 'Thunderstorm') {
-        // Draw Rain Streaks
         ctx.strokeStyle = activeKey === 'Thunderstorm' ? '#C084FC' : '#38BDF8';
         ctx.lineWidth = 1.6;
         drops.forEach((d) => {
@@ -167,7 +209,6 @@ export default function WeatherEffects() {
           }
         });
 
-        // Thunderstorm Lightning Flash
         if (activeKey === 'Thunderstorm') {
           nextFlashTimer--;
           if (nextFlashTimer <= 0) {
@@ -182,7 +223,6 @@ export default function WeatherEffects() {
           }
         }
       } else if (activeKey === 'Snow') {
-        // Draw Snowflakes
         ctx.fillStyle = '#FFFFFF';
         snowflakes.forEach((s) => {
           ctx.beginPath();
@@ -198,7 +238,6 @@ export default function WeatherEffects() {
           }
         });
       } else if (activeKey === 'Night') {
-        // Draw Twinkling Stars
         stars.forEach((st) => {
           st.alpha += st.alphaChange;
           if (st.alpha >= 1 || st.alpha <= 0.1) st.alphaChange *= -1;
@@ -235,7 +274,7 @@ export default function WeatherEffects() {
           background: bgLayers.gradA,
           backgroundAttachment: 'fixed',
           opacity: bgLayers.activeLayer === 'A' ? 1 : 0,
-          transition: 'opacity 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'opacity 600ms cubic-bezier(0.4, 0, 0.2, 1)',
           pointerEvents: 'none',
           zIndex: -2,
         }}
@@ -252,17 +291,17 @@ export default function WeatherEffects() {
           background: bgLayers.gradB,
           backgroundAttachment: 'fixed',
           opacity: bgLayers.activeLayer === 'B' ? 1 : 0,
-          transition: 'opacity 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'opacity 600ms cubic-bezier(0.4, 0, 0.2, 1)',
           pointerEvents: 'none',
           zIndex: -1,
         }}
       />
 
       <div className="weather-ambient" aria-hidden="true">
-        {/* Canvas for Rain, Thunderstorm, Snow, and Night Stars */}
+        {/* Canvas for Rain, Thunderstorm, Snow, Windy breeze, and Night Stars */}
         <canvas ref={canvasRef} className="weather-canvas" />
 
-        {/* Primary Ambient Light Orb - Shifts color with 600ms CSS transitions */}
+        {/* Primary Ambient Light Orb - Shifts color with 500-600ms CSS transitions */}
         <div
           style={{
             position: 'absolute',
@@ -275,7 +314,7 @@ export default function WeatherEffects() {
             background: `radial-gradient(circle, ${theme?.ambientColor || 'rgba(251, 191, 36, 0.35)'} 0%, transparent 70%)`,
             borderRadius: '50%',
             filter: 'blur(70px)',
-            transition: 'background 600ms ease, opacity 600ms ease',
+            transition: 'background 500ms ease, opacity 500ms ease',
           }}
         />
 
@@ -289,11 +328,11 @@ export default function WeatherEffects() {
             height: '45vw',
             maxWidth: '550px',
             maxHeight: '550px',
-            background: `radial-gradient(circle, ${theme?.ambientSecondary || 'rgba(245, 158, 11, 0.2)'} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${theme?.ambientSecondary || 'rgba(14, 165, 233, 0.2)'} 0%, transparent 70%)`,
             borderRadius: '50%',
             filter: 'blur(90px)',
             opacity: 0.8,
-            transition: 'background 600ms ease, opacity 600ms ease',
+            transition: 'background 500ms ease, opacity 500ms ease',
           }}
         />
 
@@ -305,11 +344,11 @@ export default function WeatherEffects() {
               top: '0',
               left: '0',
               width: '100%',
-              height: '40%',
+              height: '45%',
               background:
                 activeKey === 'Mist'
-                  ? 'linear-gradient(180deg, rgba(203, 213, 225, 0.18) 0%, transparent 100%)'
-                  : 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+                  ? 'linear-gradient(180deg, rgba(203, 213, 225, 0.22) 0%, transparent 100%)'
+                  : 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)',
               pointerEvents: 'none',
               animation: 'fogShift 12s ease-in-out infinite',
             }}
