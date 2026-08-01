@@ -1,21 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WeatherProvider, useWeatherContext } from './context/WeatherContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { useWeather } from './hooks/useWeather';
 import Header from './components/Header';
+import WeatherAlertsBanner from './components/WeatherAlertsBanner';
 import WeatherHero from './components/WeatherHero';
 import WeatherMetrics from './components/WeatherMetrics';
 import ForecastSection from './components/ForecastSection';
 import AirQualityCard from './components/AirQualityCard';
+import SunMoonTracker from './components/SunMoonTracker';
+import LifestyleHealthGrid from './components/LifestyleHealthGrid';
 import PlacesGrid from './components/PlacesGrid';
 import WeatherEffects from './components/WeatherEffects';
 import ApiKeyModal from './components/ApiKeyModal';
+import InteractiveMapModal from './components/InteractiveMapModal';
+import CityComparisonModal from './components/CityComparisonModal';
+import ExportReportModal from './components/ExportReportModal';
 import { WeatherLoader, WeatherError } from './components/Loader';
 import { Settings, CloudSun } from 'lucide-react';
 
 function DashboardContent() {
   const { currentWeather, forecast, pollution, loading, error, refetch } = useWeather();
   const { setIsSettingsOpen } = useWeatherContext();
+
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   return (
     <div
@@ -29,7 +39,13 @@ function DashboardContent() {
       }}
     >
       {/* Dynamic Header */}
-      <Header onRefresh={refetch} />
+      <Header
+        onRefresh={refetch}
+        onOpenMap={() => setIsMapOpen(true)}
+        onOpenCompare={() => setIsCompareOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
+        currentWeather={currentWeather}
+      />
 
       {/* Dashboard Main Content */}
       {loading ? (
@@ -82,29 +98,57 @@ function DashboardContent() {
         </div>
       ) : (
         <main>
-          {/* Main Weather Hero Card */}
+          {/* Weather Alerts Banner (Checklist #8) */}
+          <WeatherAlertsBanner currentWeather={currentWeather} />
+
+          {/* Main Weather Hero Card (Checklist #2) */}
           <WeatherHero currentWeather={currentWeather} />
 
-          {/* Weather Details & Metrics Grid */}
-          <WeatherMetrics currentWeather={currentWeather} />
+          {/* Weather Details & Metrics Grid (Checklist #2, #5) */}
+          <WeatherMetrics currentWeather={currentWeather} pollutionData={pollution} />
 
-          {/* Hourly Timeline & 7-Day Forecast */}
+          {/* Hourly Timeline & 7-Day Forecast (Checklist #3, #4) */}
           <ForecastSection
             forecastData={forecast}
             timezoneOffset={currentWeather?.timezone}
             currentWeather={currentWeather}
           />
 
-          {/* Air Quality Index Gauge */}
+          {/* Air Quality Index Gauge & Pollutant Breakdown (Checklist #6) */}
           <AirQualityCard pollutionData={pollution} />
 
-          {/* Saved Places Grid */}
+          {/* Celestial Sun & Moon Tracker (Checklist #2, #21) */}
+          <SunMoonTracker currentWeather={currentWeather} />
+
+          {/* Lifestyle, Health & Activity Suggestions (Checklist #13) */}
+          <LifestyleHealthGrid currentWeather={currentWeather} pollutionData={pollution} />
+
+          {/* Saved Places Grid (Checklist #9) */}
           <PlacesGrid />
         </main>
       )}
 
-      {/* Settings Modal */}
+      {/* Modals & Dialogs */}
       <ApiKeyModal />
+
+      <InteractiveMapModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+      />
+
+      <CityComparisonModal
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+        currentWeather={currentWeather}
+      />
+
+      <ExportReportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        currentWeather={currentWeather}
+        forecast={forecast}
+        pollution={pollution}
+      />
 
       {/* Clean Premium Footer */}
       <footer
@@ -122,10 +166,10 @@ function DashboardContent() {
         }}
       >
         <p style={{ fontWeight: '600', color: 'var(--color-text)' }}>
-          WeatherHub • Dynamic Premium Weather Dashboard
+          WeatherHub • Dynamic Professional Weather Platform
         </p>
         <p style={{ fontSize: '0.78rem', opacity: 0.7 }}>
-          Powered by OpenWeather & React • Real-Time Dynamic Theme Engine
+          Powered by Real-Time Meteorological Engine & React • Dynamic Live Themes
         </p>
       </footer>
     </div>

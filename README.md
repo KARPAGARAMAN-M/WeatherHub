@@ -61,3 +61,17 @@ VITE_OPENWEATHER_API_KEY=your_api_key_here
 ```
 
 Get a free API key at [OpenWeatherMap](https://home.openweathermap.org/users/sign_up).
+
+## 🌐 Deployment & Hosting
+
+WeatherHub is configured for effortless deployment across multiple cloud platforms and self-hosted VPS servers:
+
+- **1-Click Render Deployment**: Import `render.yaml` into Render Blueprint.
+- **Docker Compose (Local / VPS)**:
+  ```bash
+  OPENWEATHER_API_KEY=your_key docker compose up -d --build
+  ```
+- **Vercel + Railway / Render**: Host static frontend on Vercel and Spring Boot backend on Railway / Render.
+
+📖 For step-by-step instructions, see the complete [HOSTING.md](HOSTING.md) guide.
+

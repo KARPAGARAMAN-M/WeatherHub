@@ -1,0 +1,38 @@
+# Render Infrastructure-as-Code (Blueprint) Specs for WeatherHub
+# Push to GitHub and deploy in Render by clicking "New +" -> "Blueprint"
+
+services:
+  # Spring Boot Java Backend Service
+  - type: web
+    name: weatherhub-backend
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    region: singapore
+    plan: free
+    envVars:
+      - key: OPENWEATHER_API_KEY
+        sync: false # Set in Render Dashboard settings
+      - key: PORT
+        value: 8080
+
+  # React Static Web Frontend Service
+  - type: web
+    name: weatherhub-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    region: singapore
+    plan: free
+    envVars:
+      - key: VITE_OPENWEATHER_API_KEY
+        sync: false
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: weatherhub-backend
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

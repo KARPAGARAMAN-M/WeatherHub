@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { CloudSun, Navigation, Settings, RefreshCw } from 'lucide-react';
+import { CloudSun, Navigation, Settings, RefreshCw, Layers, ArrowRightLeft, FileText, ShieldAlert } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useWeatherContext } from '../context/WeatherContext';
+import { generateSevereAlerts } from '../utils/lifestyleCalc';
 
-export default function Header({ onRefresh }) {
+export default function Header({ onRefresh, onOpenMap, onOpenCompare, onOpenExport, currentWeather }) {
   const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey, detectCurrentLocation, activeCity } = useWeatherContext();
   const [isLocating, setIsLocating] = useState(false);
+
+  const alerts = generateSevereAlerts(currentWeather);
+  const alertCount = alerts.length;
 
   const handleGeolocation = async () => {
     if (!navigator.geolocation) {
@@ -88,15 +92,48 @@ export default function Header({ onRefresh }) {
           <SearchBar />
         </div>
 
-        {/* Action Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+        {/* Action Controls & Navigation Tools */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexShrink: 0 }}>
+          {/* Weather Map Modal Button */}
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onOpenMap}
+            title="Open Interactive Live Radar & Weather Map"
+            style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+          >
+            <Layers size={16} /> <span className="hide-mobile">Live Map</span>
+          </button>
+
+          {/* City Comparison Button */}
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onOpenCompare}
+            title="Compare Weather Between Cities"
+            style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+          >
+            <ArrowRightLeft size={16} /> <span className="hide-mobile">Compare</span>
+          </button>
+
+          {/* Export / Print PDF Report */}
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onOpenExport}
+            title="Download Weather Summary Report (PDF/Print)"
+            style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+          >
+            <FileText size={16} /> <span className="hide-mobile">Report</span>
+          </button>
+
           {/* Unit Toggle Button */}
           <button
             type="button"
             className="btn-ghost"
             onClick={toggleUnit}
             title={`Switch temperature unit to °${unit === 'C' ? 'F' : 'C'}`}
-            style={{ fontWeight: '800', padding: '6px 14px', fontSize: '0.9rem' }}
+            style={{ fontWeight: '800', padding: '6px 12px', fontSize: '0.85rem' }}
           >
             °{unit}
           </button>
@@ -107,7 +144,7 @@ export default function Header({ onRefresh }) {
             className="btn-icon"
             onClick={handleGeolocation}
             disabled={isLocating}
-            title="Detect my current location"
+            title="Detect my current GPS location"
           >
             <Navigation size={18} className={isLocating ? 'animate-spin' : ''} />
           </button>
@@ -129,7 +166,7 @@ export default function Header({ onRefresh }) {
             type="button"
             className="btn-icon"
             onClick={() => setIsSettingsOpen(true)}
-            title="Settings & API Key"
+            title="Settings & Preferences"
           >
             <Settings size={18} />
           </button>
@@ -138,4 +175,3 @@ export default function Header({ onRefresh }) {
     </header>
   );
 }
-

@@ -39,6 +39,7 @@ export default function SearchBar() {
   const handleSelectCity = (cityObj) => {
     setActiveCity({
       name: cityObj.name,
+      district: cityObj.district || cityObj.county || '',
       state: cityObj.state || '',
       country: cityObj.country || '',
       lat: cityObj.lat,
@@ -106,7 +107,7 @@ export default function SearchBar() {
           ref={inputRef}
           type="text"
           className="search-input"
-          placeholder="Search city, town, village, state, country..."
+          placeholder="Search city, district, state, country, zip code, lat/lon..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -114,7 +115,7 @@ export default function SearchBar() {
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          aria-label="Search city, town, village, state, or country"
+          aria-label="Search city, district, state, country, zip code, lat/lon"
         />
 
         {/* Right Clear (×) Button */}
@@ -145,14 +146,6 @@ export default function SearchBar() {
               transition: 'all 200ms ease',
               zIndex: 2,
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.color = 'var(--color-text-secondary)';
-            }}
             title="Clear search"
           >
             <X size={14} />
@@ -176,13 +169,13 @@ export default function SearchBar() {
               }}
             >
               <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-primary)' }} />
-              Searching locations...
+              Searching geocoding registry...
             </div>
           )}
 
           {!isSearching && suggestions.length === 0 && (
             <div style={{ padding: '16px 18px', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-              Location not found. Please try a different city, town, or country.
+              Location not found. Please try a different city, district, state, or country.
             </div>
           )}
 
@@ -190,7 +183,7 @@ export default function SearchBar() {
             suggestions.map((item, idx) => {
               const isSelected = selectedIndex === idx;
               const fullCountry = getCountryName(item.country);
-              const subDetails = [item.state, fullCountry].filter(Boolean).join(', ');
+              const subDetails = [item.district, item.state, fullCountry].filter(Boolean).join(', ');
 
               return (
                 <div
@@ -236,4 +229,3 @@ export default function SearchBar() {
     </div>
   );
 }
-

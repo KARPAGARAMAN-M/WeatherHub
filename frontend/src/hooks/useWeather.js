@@ -10,6 +10,8 @@ import { useThemeContext } from '../context/ThemeContext';
 const apiCache = new Map();
 const CACHE_TTL_MS = 300000; // 5 minutes
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 /**
  * Custom Hook: useWeather
  * Manages fetching current weather, forecast, and air pollution data with client caching.
@@ -70,7 +72,7 @@ export function useWeather() {
         const geoParams = new URLSearchParams({ query: locationName });
         if (apiKey) geoParams.append('apiKey', apiKey);
 
-        const geoRes = await fetch(`/api/weather/geocoding?${geoParams.toString()}`);
+        const geoRes = await fetch(`${API_BASE}/api/weather/geocoding?${geoParams.toString()}`);
         if (!geoRes.ok) {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
@@ -96,7 +98,7 @@ export function useWeather() {
       if (resolvedName) weatherParams.append('city', resolvedName);
       if (apiKey) weatherParams.append('apiKey', apiKey);
 
-      const weatherRes = await fetch(`/api/weather/current?${weatherParams.toString()}`);
+      const weatherRes = await fetch(`${API_BASE}/api/weather/current?${weatherParams.toString()}`);
       if (!weatherRes.ok) {
         throw new Error('Location not found. Please try a different city, town, or country.');
       }
@@ -129,7 +131,7 @@ export function useWeather() {
       if (apiKey) forecastParams.append('apiKey', apiKey);
 
       let forecastData = null;
-      const forecastRes = await fetch(`/api/weather/forecast?${forecastParams.toString()}`);
+      const forecastRes = await fetch(`${API_BASE}/api/weather/forecast?${forecastParams.toString()}`);
       if (forecastRes.ok) {
         forecastData = await forecastRes.json();
         setForecast(forecastData);
@@ -144,7 +146,7 @@ export function useWeather() {
       if (apiKey) pollutionParams.append('apiKey', apiKey);
 
       let pollutionData = null;
-      const pollutionRes = await fetch(`/api/weather/pollution?${pollutionParams.toString()}`);
+      const pollutionRes = await fetch(`${API_BASE}/api/weather/pollution?${pollutionParams.toString()}`);
       if (pollutionRes.ok) {
         pollutionData = await pollutionRes.json();
         setPollution(pollutionData);
@@ -209,7 +211,7 @@ export function useGeocoding(searchQuery) {
     const params = new URLSearchParams({ query: trimmed });
     if (apiKey) params.append('apiKey', apiKey);
 
-    fetch(`/api/weather/geocoding?${params.toString()}`)
+    fetch(`${API_BASE}/api/weather/geocoding?${params.toString()}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (isMounted) {

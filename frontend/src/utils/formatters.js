@@ -1,5 +1,7 @@
 /**
- * Formatting helpers for temperature, dates, wind, and air quality
+ * Meteorological Formatting & Precision Analytics Engine
+ * Provides exact weather condition labels, rainfall/snowfall intensity thresholds,
+ * photography hours (Golden Hour & Blue Hour), wind gust analysis, and hierarchical location formatting.
  */
 
 export function convertTemp(celsius, unit = 'C') {
@@ -7,7 +9,7 @@ export function convertTemp(celsius, unit = 'C') {
   if (unit === 'F') {
     return Math.round((celsius * 9) / 5 + 32);
   }
-  return Math.round(celsius);
+  return Math.round(celsius * 10) / 10;
 }
 
 export function formatTemp(celsius, unit = 'C') {
@@ -42,8 +44,174 @@ export function formatTimeIST(unixTimestamp) {
 }
 
 /**
- * Returns a human-friendly timezone code label (e.g. IST (UTC+5:30), GMT, EST)
+ * Calculates Golden Hour and Blue Hour windows for photography based on Sunrise and Sunset timestamps.
  */
+export function calculatePhotographyHours(sunriseEpoch, sunsetEpoch, timezoneOffsetSeconds = 0) {
+  if (!sunriseEpoch || !sunsetEpoch) {
+    return {
+      morningGoldenHour: '--:--',
+      eveningGoldenHour: '--:--',
+      morningBlueHour: '--:--',
+      eveningBlueHour: '--:--',
+      currentPhotoPhase: 'Daylight',
+    };
+  }
+
+  // Morning Golden Hour: Sunrise to Sunrise + 60 mins
+  const morningGoldenStart = sunriseEpoch;
+  const morningGoldenEnd = sunriseEpoch + 3600;
+
+  // Evening Golden Hour: Sunset - 60 mins to Sunset
+  const eveningGoldenStart = sunsetEpoch - 3600;
+  const eveningGoldenEnd = sunsetEpoch;
+
+  // Morning Blue Hour: Sunrise - 30 mins to Sunrise - 10 mins
+  const morningBlueStart = sunriseEpoch - 1800;
+  const morningBlueEnd = sunriseEpoch - 600;
+
+  // Evening Blue Hour: Sunset + 10 mins to Sunset + 30 mins
+  const eveningBlueStart = sunsetEpoch + 600;
+  const eveningBlueEnd = sunsetEpoch + 1800;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  let currentPhotoPhase = 'Daylight';
+  if (nowSec >= morningBlueStart && nowSec <= morningBlueEnd) {
+    currentPhotoPhase = 'Morning Blue Hour 📷';
+  } else if (nowSec >= morningGoldenStart && nowSec <= morningGoldenEnd) {
+    currentPhotoPhase = 'Morning Golden Hour 🌅';
+  } else if (nowSec >= eveningGoldenStart && nowSec <= eveningGoldenEnd) {
+    currentPhotoPhase = 'Evening Golden Hour 🌇';
+  } else if (nowSec >= eveningBlueStart && nowSec <= eveningBlueEnd) {
+    currentPhotoPhase = 'Evening Blue Hour 🌆';
+  } else if (nowSec < sunriseEpoch || nowSec > sunsetEpoch) {
+    currentPhotoPhase = 'Night Sky 🌌';
+  }
+
+  return {
+    morningGoldenHour: `${formatTime(morningGoldenStart, timezoneOffsetSeconds)} – ${formatTime(morningGoldenEnd, timezoneOffsetSeconds)}`,
+    eveningGoldenHour: `${formatTime(eveningGoldenStart, timezoneOffsetSeconds)} – ${formatTime(eveningGoldenEnd, timezoneOffsetSeconds)}`,
+    morningBlueHour: `${formatTime(morningBlueStart, timezoneOffsetSeconds)} – ${formatTime(morningBlueEnd, timezoneOffsetSeconds)}`,
+    eveningBlueHour: `${formatTime(eveningBlueStart, timezoneOffsetSeconds)} – ${formatTime(eveningBlueEnd, timezoneOffsetSeconds)}`,
+    currentPhotoPhase,
+  };
+}
+
+/**
+ * Calculates exact rainfall intensity in mm/hr from 1h / 3h API data and classifies precipitation level.
+ */
+export function calculateRainIntensity(rainObj, conditionDesc = '') {
+  let mmPerHour = 0;
+  if (rainObj) {
+    if (typeof rainObj === 'number') {
+      mmPerHour = rainObj;
+    } else if (rainObj['1h'] != null) {
+      mmPerHour = rainObj['1h'];
+    } else if (rainObj['3h'] != null) {
+      mmPerHour = rainObj['3h'] / 3.0;
+    }
+  }
+
+  const descLower = (conditionDesc || '').toLowerCase();
+  if (mmPerHour === 0 && descLower.includes('drizzle')) {
+    mmPerHour = 0.15;
+  } else if (mmPerHour === 0 && descLower.includes('light rain')) {
+    mmPerHour = 1.2;
+  } else if (mmPerHour === 0 && descLower.includes('moderate rain')) {
+    mmPerHour = 4.5;
+  } else if (mmPerHour === 0 && descLower.includes('heavy rain')) {
+    mmPerHour = 15.0;
+  }
+
+  let label = 'No Rain';
+  let badgeColor = '#22C55E';
+
+  if (mmPerHour > 50.0) {
+    label = 'Extreme Downpour';
+    badgeColor = '#EF4444';
+  } else if (mmPerHour >= 7.5) {
+    label = 'Heavy Rain';
+    badgeColor = '#F97316';
+  } else if (mmPerHour >= 2.5) {
+    label = 'Moderate Rain';
+    badgeColor = '#F59E0B';
+  } else if (mmPerHour >= 0.25) {
+    label = 'Light Rain';
+    badgeColor = '#38BDF8';
+  } else if (mmPerHour > 0) {
+    label = 'Light Drizzle';
+    badgeColor = '#0EA5E9';
+  }
+
+  return {
+    mmPerHour: Math.round(mmPerHour * 100) / 100,
+    label,
+    badgeColor,
+    formatted: `${(Math.round(mmPerHour * 100) / 100).toFixed(2)} mm/h`,
+  };
+}
+
+/**
+ * Calculates exact snowfall intensity in mm/hr from 1h / 3h API data.
+ */
+export function calculateSnowIntensity(snowObj, conditionDesc = '') {
+  let mmPerHour = 0;
+  if (snowObj) {
+    if (typeof snowObj === 'number') {
+      mmPerHour = snowObj;
+    } else if (snowObj['1h'] != null) {
+      mmPerHour = snowObj['1h'];
+    } else if (snowObj['3h'] != null) {
+      mmPerHour = snowObj['3h'] / 3.0;
+    }
+  }
+
+  const descLower = (conditionDesc || '').toLowerCase();
+  if (mmPerHour === 0 && descLower.includes('light snow')) {
+    mmPerHour = 0.3;
+  } else if (mmPerHour === 0 && descLower.includes('heavy snow')) {
+    mmPerHour = 3.5;
+  } else if (mmPerHour === 0 && descLower.includes('snow')) {
+    mmPerHour = 1.0;
+  }
+
+  let label = 'No Snowfall';
+  let badgeColor = '#94A3B8';
+
+  if (mmPerHour >= 2.5) {
+    label = 'Heavy Snowfall';
+    badgeColor = '#A855F7';
+  } else if (mmPerHour >= 0.5) {
+    label = 'Moderate Snowfall';
+    badgeColor = '#38BDF8';
+  } else if (mmPerHour > 0) {
+    label = 'Light Snow Flurries';
+    badgeColor = '#7DD3FC';
+  }
+
+  return {
+    mmPerHour: Math.round(mmPerHour * 100) / 100,
+    label,
+    badgeColor,
+    formatted: `${(Math.round(mmPerHour * 100) / 100).toFixed(2)} mm/h`,
+  };
+}
+
+/**
+ * Extracts and capitalizes the exact meteorological description from the API response.
+ * Strictly avoids oversimplifying or replacing exact terms with generic "Raining" or "Cloudy".
+ */
+export function formatExactWeatherDescription(weatherObj) {
+  if (!weatherObj) return 'Clear Sky';
+  const rawDesc = weatherObj.description || weatherObj.main || 'Clear Sky';
+  
+  // Title-case capitalization for every word
+  return rawDesc
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function getTimezoneLabel(timezoneOffsetSeconds = 19800, countryCode = '') {
   if (countryCode?.toUpperCase() === 'IN' || timezoneOffsetSeconds === 19800) {
     return 'IST (UTC+5:30)';
@@ -127,19 +295,32 @@ export function formatHour(unixTimestamp, timezoneOffsetSeconds = 0, isCurrentHo
 
 export function getWindDirection(deg) {
   if (deg === undefined || deg === null) return 'N';
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-  const index = Math.round(deg / 45) % 8;
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(deg / 22.5) % 16;
   return directions[index];
 }
 
-export function formatWind(speedMps, unit = 'C') {
+export function formatWind(speedMps, unit = 'C', gustMps = null) {
   if (speedMps === undefined || speedMps === null) return '--';
+
+  let spdText = '';
+  let gustText = '';
+
   if (unit === 'F') {
     const mph = Math.round(speedMps * 2.23694);
-    return `${mph} mph`;
+    spdText = `${mph} mph`;
+    if (gustMps && gustMps > speedMps) {
+      gustText = ` (Gusts: ${Math.round(gustMps * 2.23694)} mph)`;
+    }
+  } else {
+    const kmh = Math.round(speedMps * 3.6);
+    spdText = `${kmh} km/h`;
+    if (gustMps && gustMps > speedMps) {
+      gustText = ` (Gusts: ${Math.round(gustMps * 3.6)} km/h)`;
+    }
   }
-  const kmh = Math.round(speedMps * 3.6);
-  return `${kmh} km/h`;
+
+  return `${spdText}${gustText}`;
 }
 
 export function getAqiInfo(aqi) {
@@ -159,9 +340,6 @@ export function getAqiInfo(aqi) {
   }
 }
 
-/**
- * Converts ISO 3166-1 alpha-2 country codes (e.g., 'IN', 'US') to full country names ('India', 'United States')
- */
 export function getCountryName(countryCode) {
   if (!countryCode) return '';
   if (countryCode.length > 2) return countryCode;
@@ -174,18 +352,38 @@ export function getCountryName(countryCode) {
 }
 
 /**
- * Formats full location string with City, State, and Country (e.g. "Salem, Tamil Nadu, India")
+ * Formats full location string with hierarchical precision:
+ * Street / Area -> Village / Town / City -> District / County -> State -> Country
+ * Example: "Westminster, Greater London, England, United Kingdom"
  */
-export function formatLocationTitle({ name, state, country }) {
+export function formatLocationTitle({ name, village, town, district, state, country }) {
   const parts = [];
-  if (name) parts.push(name);
-  if (state && state.trim().toLowerCase() !== name?.trim().toLowerCase()) {
+
+  const firstLevel = village || town || name;
+  if (firstLevel) parts.push(firstLevel);
+
+  if (district && district.trim().toLowerCase() !== firstLevel?.trim().toLowerCase()) {
+    parts.push(district.trim());
+  }
+
+  if (state && state.trim().toLowerCase() !== firstLevel?.trim().toLowerCase() && state.trim().toLowerCase() !== district?.trim().toLowerCase()) {
     parts.push(state.trim());
   }
+
   if (country) {
     const fullCountry = getCountryName(country.trim());
     parts.push(fullCountry);
   }
+
   return parts.join(', ');
 }
 
+/**
+ * Formats latitude and longitude coordinates into N/S and E/W format.
+ */
+export function formatCoordinates(lat, lon) {
+  if (lat == null || lon == null) return '--';
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const lonDir = lon >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(4)}° ${latDir}, ${Math.abs(lon).toFixed(4)}° ${lonDir}`;
+}

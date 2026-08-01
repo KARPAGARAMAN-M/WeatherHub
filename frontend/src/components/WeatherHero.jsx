@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Star, MapPin, ArrowUp, ArrowDown, Thermometer, Calendar, Clock, Navigation } from 'lucide-react';
-import { formatTemp, formatDate, formatTime, formatTimeIST, formatLocationTitle, getTimezoneLabel, convertTemp } from '../utils/formatters';
+import { Star, MapPin, ArrowUp, ArrowDown, Thermometer, Calendar, Clock, Navigation, Camera, Compass } from 'lucide-react';
+import {
+  formatTemp,
+  formatDate,
+  formatTime,
+  formatTimeIST,
+  formatLocationTitle,
+  getTimezoneLabel,
+  formatExactWeatherDescription,
+  calculateRainIntensity,
+  calculateSnowIntensity,
+  calculatePhotographyHours,
+  formatCoordinates
+} from '../utils/formatters';
 import { useWeatherContext } from '../context/WeatherContext';
 import { useThemeContext } from '../context/ThemeContext';
 import WeatherIllustration from './WeatherIllustration';
@@ -43,11 +55,12 @@ export default function WeatherHero({ currentWeather }) {
 
   if (!currentWeather) return null;
 
-  const { name, sys, main, weather, dt, timezone, coord, state } = currentWeather;
+  const { name, sys, main, weather, dt, timezone, coord, state, rain, snow, elevation } = currentWeather;
   const condition = weather?.[0] || {};
   
   const resolvedState = state || activeCity?.state || '';
   const resolvedCountry = sys?.country || activeCity?.country || '';
+  const resolvedDistrict = activeCity?.district || activeCity?.county || '';
 
   const cityObj = {
     name,
@@ -58,7 +71,18 @@ export default function WeatherHero({ currentWeather }) {
   };
 
   const isSaved = isCitySaved(cityObj);
-  const locationTitle = formatLocationTitle({ name, state: resolvedState, country: resolvedCountry });
+  const locationTitle = formatLocationTitle({
+    name,
+    district: resolvedDistrict,
+    state: resolvedState,
+    country: resolvedCountry
+  });
+
+  const exactDescription = formatExactWeatherDescription(condition);
+  const rainIntensity = calculateRainIntensity(rain, condition.description);
+  const snowIntensity = calculateSnowIntensity(snow, condition.description);
+  const photoHours = calculatePhotographyHours(sys?.sunrise, sys?.sunset, timezone);
+  const formattedCoords = formatCoordinates(coord?.lat, coord?.lon);
 
   const tempVal = displayTemp != null ? displayTemp : main?.temp;
 
@@ -103,8 +127,8 @@ export default function WeatherHero({ currentWeather }) {
           {/* Header Row: City Name & Save Star Button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={22} style={{ color: 'var(--color-primary)' }} />
-              <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.03em' }}>
+              <MapPin size={24} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+              <h2 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.03em' }}>
                 {locationTitle}
               </h2>
             </div>
@@ -123,7 +147,7 @@ export default function WeatherHero({ currentWeather }) {
                   gap: '4px',
                 }}
               >
-                <Navigation size={12} /> Live Location
+                <Navigation size={12} /> High-Accuracy GPS
               </span>
             )}
             <button
@@ -143,6 +167,18 @@ export default function WeatherHero({ currentWeather }) {
               <Star size={14} fill={isSaved ? 'var(--color-primary)' : 'none'} />
               <span>{isSaved ? 'Saved Location' : 'Save Location'}</span>
             </button>
+          </div>
+
+          {/* Coordinates & Elevation Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Compass size={13} style={{ color: 'var(--color-primary)' }} />
+              {formattedCoords}
+            </span>
+            {elevation != null && (
+              <span>• Elevation: <strong>{elevation}m</strong></span>
+            )}
+            <span>• Timezone: <strong>{getTimezoneLabel(timezone, resolvedCountry)}</strong></span>
           </div>
 
           {/* Date & Dual Time Display (Location Local Time + IST) */}
@@ -165,7 +201,7 @@ export default function WeatherHero({ currentWeather }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <Clock size={15} style={{ color: 'var(--color-primary)' }} />
               <span>
-                City Local ({getTimezoneLabel(timezone, resolvedCountry)}):{' '}
+                Local Time:{' '}
                 <strong style={{ color: 'var(--color-text)' }}>{formatTime(dt, timezone)}</strong>
               </span>
             </div>
@@ -180,7 +216,7 @@ export default function WeatherHero({ currentWeather }) {
             )}
           </div>
 
-          {/* Visual Focal Point: Enlarged Temperature Display */}
+          {/* Temperature & Exact Meteorological Condition Badge */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.5rem', flexWrap: 'wrap' }}>
             <div
               style={{
@@ -198,7 +234,7 @@ export default function WeatherHero({ currentWeather }) {
             </div>
 
             <div>
-              {/* Condition Badge */}
+              {/* Exact Condition Badge */}
               <div
                 style={{
                   display: 'inline-block',
@@ -208,73 +244,95 @@ export default function WeatherHero({ currentWeather }) {
                   color: 'var(--badge-text)',
                   fontSize: '1rem',
                   fontWeight: '700',
-                  textTransform: 'capitalize',
                   marginBottom: '8px',
                   border: '1px solid var(--card-border)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 }}
               >
-                {theme?.emoji || '🌤️'} {condition.description || condition.main || 'Clear'}
+                {theme?.emoji || '🌤️'} {exactDescription}
               </div>
 
-              {/* Feels Like */}
+              {/* Feels Like & Rain/Snow Intensity */}
               <div
                 style={{
                   fontSize: '0.92rem',
                   color: 'var(--color-text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '12px',
+                  flexWrap: 'wrap',
                 }}
               >
-                <Thermometer size={16} style={{ color: 'var(--color-primary)' }} />
-                Feels like <strong style={{ color: '#FFF' }}>{formatTemp(main?.feels_like, unit)}</strong>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Thermometer size={16} style={{ color: 'var(--color-primary)' }} />
+                  Feels like <strong style={{ color: '#FFF' }}>{formatTemp(main?.feels_like, unit)}</strong>
+                </span>
+
+                {rainIntensity.mmPerHour > 0 && (
+                  <span style={{ color: rainIntensity.badgeColor, fontWeight: '700', fontSize: '0.84rem' }}>
+                    🌧 {rainIntensity.label} ({rainIntensity.formatted})
+                  </span>
+                )}
+
+                {snowIntensity.mmPerHour > 0 && (
+                  <span style={{ color: snowIntensity.badgeColor, fontWeight: '700', fontSize: '0.84rem' }}>
+                    🌨 {snowIntensity.label} ({snowIntensity.formatted})
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* High / Low Bar */}
+          {/* High / Low Bar & Photography Phase */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'space-between',
               gap: '20px',
               marginTop: '1.5rem',
               paddingTop: '1.1rem',
               borderTop: '1px solid var(--card-border)',
-              maxWidth: '380px',
+              flexWrap: 'wrap',
             }}
           >
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.9rem',
-                fontWeight: '700',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <ArrowUp size={16} style={{ color: '#F87171' }} />
-              High: <strong style={{ color: '#FFF' }}>{formatTemp(main?.temp_max, unit)}</strong>
-            </span>
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.9rem',
-                fontWeight: '700',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              <ArrowDown size={16} style={{ color: 'var(--color-primary)' }} />
-              Low: <strong style={{ color: '#FFF' }}>{formatTemp(main?.temp_min, unit)}</strong>
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <ArrowUp size={16} style={{ color: '#F87171' }} />
+                High: <strong style={{ color: '#FFF' }}>{formatTemp(main?.temp_max, unit)}</strong>
+              </span>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  color: 'var(--color-text-secondary)',
+                }}
+              >
+                <ArrowDown size={16} style={{ color: 'var(--color-primary)' }} />
+                Low: <strong style={{ color: '#FFF' }}>{formatTemp(main?.temp_min, unit)}</strong>
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#FBBF24', fontWeight: '700' }}>
+              <Camera size={15} />
+              {photoHours.currentPhotoPhase}
+            </div>
           </div>
         </div>
 
-        {/* Dynamic Weather Illustration (Eliminating Empty Right Space) */}
+        {/* Dynamic Weather Illustration */}
         <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
           <WeatherIllustration
             themeKey={theme?.key}

@@ -1,6 +1,16 @@
 import React from 'react';
-import { Droplets, Wind, Gauge, Sunrise, Sunset, Eye, Sun, Cloud } from 'lucide-react';
-import { formatWind, getWindDirection, formatTime } from '../utils/formatters';
+import { Droplets, Wind, Gauge, Sunrise, Sunset, Eye, Sun, Cloud, Moon, Thermometer, Compass, Activity, CloudRain, Snowflake } from 'lucide-react';
+import {
+  formatWind,
+  getWindDirection,
+  formatTime,
+  formatTemp,
+  getAqiInfo,
+  calculateRainIntensity,
+  calculateSnowIntensity,
+  formatCoordinates
+} from '../utils/formatters';
+import { calculateDewPoint, calculateMoonPhase } from '../utils/lifestyleCalc';
 import { useWeatherContext } from '../context/WeatherContext';
 
 function CircularGauge({ percent, color = 'var(--color-primary)', size = 38 }) {
@@ -35,14 +45,24 @@ function CircularGauge({ percent, color = 'var(--color-primary)', size = 38 }) {
   );
 }
 
-export default function WeatherMetrics({ currentWeather }) {
+export default function WeatherMetrics({ currentWeather, pollutionData }) {
   const { unit } = useWeatherContext();
 
   if (!currentWeather) return null;
 
-  const { main, wind, sys, visibility, clouds, timezone, uvi } = currentWeather;
+  const { main, wind, sys, visibility, clouds, timezone, uvi, rain, snow, coord, elevation } = currentWeather;
 
   const calcUvi = uvi !== undefined ? uvi : Math.max(0, Math.round((100 - (clouds?.all || 0)) / 12));
+
+  // Precision Calculations
+  const tempC = main?.temp || 25;
+  const humVal = main?.humidity || 60;
+  const dewPointC = calculateDewPoint(tempC, humVal);
+  const moonInfo = calculateMoonPhase();
+  const aqiVal = pollutionData?.list?.[0]?.main?.aqi || 1;
+  const aqiInfo = getAqiInfo(aqiVal);
+  const rainInfo = calculateRainIntensity(rain, currentWeather?.weather?.[0]?.description);
+  const snowInfo = calculateSnowIntensity(snow, currentWeather?.weather?.[0]?.description);
   
   const getUvInfo = (val) => {
     if (val <= 2) return { label: 'Low', color: '#22C55E' };
@@ -56,7 +76,7 @@ export default function WeatherMetrics({ currentWeather }) {
     if (val >= 30 && val <= 60) return '#22C55E';
     if (val > 60 && val <= 80) return '#38BDF8';
     if (val > 80) return '#A855F7';
-    return '#F59E0B'; // Dry
+    return '#F59E0B';
   };
 
   const getWindColor = (spd) => {
@@ -73,7 +93,7 @@ export default function WeatherMetrics({ currentWeather }) {
   };
 
   const uvInfo = getUvInfo(calcUvi);
-  const humidityPercent = main?.humidity ?? 0;
+  const humidityPercent = humVal;
   const uvPercent = (calcUvi / 12) * 100;
   const windPercent = Math.min(100, ((wind?.speed || 0) / 20) * 100);
   const pressurePercent = Math.min(100, Math.max(0, (((main?.pressure || 1013) - 970) / 70) * 100));
@@ -82,40 +102,49 @@ export default function WeatherMetrics({ currentWeather }) {
 
   const metrics = [
     {
+      id: 'feels_like',
+      label: 'Feels Like',
+      value: formatTemp(main?.feels_like, unit),
+      icon: Thermometer,
+      gaugePercent: Math.min(100, Math.max(0, ((main?.feels_like || 20) / 45) * 100)),
+      color: 'var(--color-primary)',
+      subtext: main?.feels_like > main?.temp ? 'Warmer than actual' : 'Cooler than actual',
+    },
+    {
       id: 'humidity',
       label: 'Humidity',
-      value: `${main?.humidity ?? '--'}%`,
+      value: `${humVal}%`,
       icon: Droplets,
       gaugePercent: humidityPercent,
-      color: getHumidityColor(main?.humidity),
-      subtext: main?.humidity > 70 ? 'High Humidity' : main?.humidity < 30 ? 'Dry Air' : 'Comfortable',
+      color: getHumidityColor(humVal),
+      subtext: humVal > 70 ? 'High Moisture' : humVal < 30 ? 'Dry Air' : 'Comfortable Zone',
+    },
+    {
+      id: 'dew_point',
+      label: 'Dew Point',
+      value: formatTemp(dewPointC, unit),
+      icon: Droplets,
+      gaugePercent: Math.min(100, Math.max(0, ((dewPointC + 5) / 35) * 100)),
+      color: '#38BDF8',
+      subtext: dewPointC > 20 ? 'Muggy Air' : 'Comfortable',
+    },
+    {
+      id: 'rain_rate',
+      label: 'Rainfall Intensity',
+      value: rainInfo.formatted,
+      icon: CloudRain,
+      gaugePercent: Math.min(100, (rainInfo.mmPerHour / 20) * 100),
+      color: rainInfo.badgeColor,
+      subtext: rainInfo.label,
     },
     {
       id: 'wind',
-      label: 'Wind Speed',
-      value: formatWind(wind?.speed, unit),
+      label: 'Wind & Gusts',
+      value: formatWind(wind?.speed, unit, wind?.gust),
       icon: Wind,
       gaugePercent: windPercent,
       color: getWindColor(wind?.speed || 0),
       subtext: `${getWindDirection(wind?.deg)} (${wind?.deg ?? 0}°)`,
-    },
-    {
-      id: 'pressure',
-      label: 'Pressure',
-      value: `${main?.pressure ?? '--'} hPa`,
-      icon: Gauge,
-      gaugePercent: pressurePercent,
-      color: main?.pressure > 1013 ? '#38BDF8' : '#F59E0B',
-      subtext: main?.pressure > 1013 ? 'High Pressure' : 'Low Pressure',
-    },
-    {
-      id: 'visibility',
-      label: 'Visibility',
-      value: visibility ? `${(visibility / 1000).toFixed(1)} km` : '--',
-      icon: Eye,
-      gaugePercent: visPercent,
-      color: getVisColor(visibility || 10000),
-      subtext: visibility >= 10000 ? 'Optimal Clarity' : 'Reduced',
     },
     {
       id: 'uv',
@@ -127,27 +156,56 @@ export default function WeatherMetrics({ currentWeather }) {
       subtext: uvInfo.label,
     },
     {
+      id: 'aqi',
+      label: 'Air Quality (AQI)',
+      value: `AQI ${aqiVal}`,
+      icon: Activity,
+      gaugePercent: (aqiVal / 5) * 100,
+      color: aqiInfo.color,
+      subtext: aqiInfo.label,
+    },
+    {
+      id: 'pressure',
+      label: 'Atmospheric Pressure',
+      value: `${main?.pressure ?? '--'} hPa`,
+      icon: Gauge,
+      gaugePercent: pressurePercent,
+      color: main?.pressure > 1013 ? '#38BDF8' : '#F59E0B',
+      subtext: main?.pressure > 1013 ? 'High Pressure' : 'Low Pressure System',
+    },
+    {
+      id: 'visibility',
+      label: 'Visibility',
+      value: visibility ? `${(visibility / 1000).toFixed(1)} km` : '--',
+      icon: Eye,
+      gaugePercent: visPercent,
+      color: getVisColor(visibility || 10000),
+      subtext: visibility >= 10000 ? 'Optimal Clarity' : 'Reduced Clarity',
+    },
+    {
       id: 'clouds',
-      label: 'Cloud Cover',
+      label: 'Cloud Coverage',
       value: `${clouds?.all ?? 0}%`,
       icon: Cloud,
       gaugePercent: cloudPercent,
       color: '#94A3B8',
-      subtext: clouds?.all > 50 ? 'Heavy Overcast' : clouds?.all > 20 ? 'Partly Cloudy' : 'Clear Sky',
+      subtext: clouds?.all > 70 ? 'Overcast Sky' : clouds?.all > 20 ? 'Scattered Clouds' : 'Clear Sky',
     },
     {
-      id: 'sunrise',
-      label: 'Sunrise',
-      value: formatTime(sys?.sunrise, timezone),
-      icon: Sunrise,
-      subtext: 'Morning Dawn',
+      id: 'coords',
+      label: 'Coordinates & Elevation',
+      value: `${coord?.lat ? coord.lat.toFixed(2) : '--'}°, ${coord?.lon ? coord.lon.toFixed(2) : '--'}°`,
+      icon: Compass,
+      color: 'var(--color-primary)',
+      subtext: elevation != null ? `Elevation: ${elevation}m` : 'GPS Position',
     },
     {
-      id: 'sunset',
-      label: 'Sunset',
-      value: formatTime(sys?.sunset, timezone),
-      icon: Sunset,
-      subtext: 'Evening Dusk',
+      id: 'moon',
+      label: 'Moon Phase',
+      value: moonInfo.iconEmoji,
+      icon: Moon,
+      color: '#A855F7',
+      subtext: moonInfo.phaseName,
     },
   ];
 
@@ -155,13 +213,13 @@ export default function WeatherMetrics({ currentWeather }) {
     <div style={{ marginBottom: '2rem' }}>
       <div className="section-heading">
         <Droplets size={20} />
-        <h3>Weather Details & Metrics</h3>
+        <h3>Meteorological Parameters & Environmental Precision</h3>
       </div>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
           gap: '1rem',
         }}
       >
@@ -212,7 +270,7 @@ export default function WeatherMetrics({ currentWeather }) {
 
               <div
                 style={{
-                  fontSize: '1.45rem',
+                  fontSize: '1.35rem',
                   fontWeight: '800',
                   color: 'var(--color-text)',
                   lineHeight: 1.1,
