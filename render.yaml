@@ -20,8 +20,9 @@ services:
   - type: web
     name: weatherhub-frontend
     runtime: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     region: singapore
     plan: free
     envVars:

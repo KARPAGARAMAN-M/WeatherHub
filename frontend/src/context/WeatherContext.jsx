@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 
 const WeatherContext = createContext();
 
@@ -79,10 +80,10 @@ export function WeatherProvider({ children }) {
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            const params = new URLSearchParams({ lat: latitude, lon: longitude });
-            if (apiKey) params.append('apiKey', apiKey);
+            const params = { lat: latitude, lon: longitude };
+            if (apiKey) params.apiKey = apiKey;
 
-            const res = await fetch(`/api/weather/current?${params.toString()}`);
+            const res = await fetchApi('/api/weather/current', params);
             if (res.ok) {
               const data = await res.json();
               setActiveCity({

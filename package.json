@@ -1,0 +1,20 @@
+{
+  "name": "weatherhub-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "WeatherHub - Real-Time Dynamic Weather Platform",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
+  },
+  "keywords": [
+    "weather",
+    "react",
+    "vite",
+    "spring-boot",
+    "docker"
+  ],
+  "author": "",
+  "license": "MIT"
+}

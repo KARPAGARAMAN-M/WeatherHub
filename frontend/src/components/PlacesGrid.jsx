@@ -4,6 +4,7 @@ import { formatTemp, getCountryName } from '../utils/formatters';
 import { useWeatherContext } from '../context/WeatherContext';
 import { getThemeForCondition } from '../utils/weatherTheme';
 import AnimatedWeatherIcon from './AnimatedWeatherIcon';
+import { fetchApi } from '../utils/api';
 
 function SavedCityCard({ cityObj, isSelected }) {
   const { setActiveCity, removeSavedCity, unit, apiKey } = useWeatherContext();
@@ -14,16 +15,16 @@ function SavedCityCard({ cityObj, isSelected }) {
 
   useEffect(() => {
     let isMounted = true;
-    const params = new URLSearchParams();
+    const params = {};
     if (cityObj.lat && cityObj.lon) {
-      params.append('lat', cityObj.lat);
-      params.append('lon', cityObj.lon);
+      params.lat = cityObj.lat;
+      params.lon = cityObj.lon;
     } else {
-      params.append('city', cityObj.name);
+      params.city = cityObj.name;
     }
-    if (apiKey) params.append('apiKey', apiKey);
+    if (apiKey) params.apiKey = apiKey;
 
-    fetch(`/api/weather/current?${params.toString()}`)
+    fetchApi('/api/weather/current', params)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

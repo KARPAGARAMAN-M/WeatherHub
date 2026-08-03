@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWeatherContext } from '../context/WeatherContext';
 import { useThemeContext } from '../context/ThemeContext';
+import { fetchApi } from '../utils/api';
 
 /**
  * Custom Hook: useWeather
@@ -9,8 +10,6 @@ import { useThemeContext } from '../context/ThemeContext';
  */
 const apiCache = new Map();
 const CACHE_TTL_MS = 300000; // 5 minutes
-
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 /**
  * Custom Hook: useWeather
@@ -69,10 +68,10 @@ export function useWeather() {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
 
-        const geoParams = new URLSearchParams({ query: locationName });
-        if (apiKey) geoParams.append('apiKey', apiKey);
+        const geoParams = { query: locationName };
+        if (apiKey) geoParams.apiKey = apiKey;
 
-        const geoRes = await fetch(`${API_BASE}/api/weather/geocoding?${geoParams.toString()}`);
+        const geoRes = await fetchApi('/api/weather/geocoding', geoParams);
         if (!geoRes.ok) {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
@@ -91,14 +90,11 @@ export function useWeather() {
       }
 
       // Step 2: Fetch Current Weather
-      const weatherParams = new URLSearchParams({
-        lat: targetLat,
-        lon: targetLon,
-      });
-      if (resolvedName) weatherParams.append('city', resolvedName);
-      if (apiKey) weatherParams.append('apiKey', apiKey);
+      const weatherParams = { lat: targetLat, lon: targetLon };
+      if (resolvedName) weatherParams.city = resolvedName;
+      if (apiKey) weatherParams.apiKey = apiKey;
 
-      const weatherRes = await fetch(`${API_BASE}/api/weather/current?${weatherParams.toString()}`);
+      const weatherRes = await fetchApi('/api/weather/current', weatherParams);
       if (!weatherRes.ok) {
         throw new Error('Location not found. Please try a different city, town, or country.');
       }
@@ -123,30 +119,24 @@ export function useWeather() {
       }
 
       // Step 3: Fetch 5-Day / 3-Hour Forecast
-      const forecastParams = new URLSearchParams({
-        lat: targetLat,
-        lon: targetLon,
-      });
-      if (resolvedName) forecastParams.append('city', resolvedName);
-      if (apiKey) forecastParams.append('apiKey', apiKey);
+      const forecastParams = { lat: targetLat, lon: targetLon };
+      if (resolvedName) forecastParams.city = resolvedName;
+      if (apiKey) forecastParams.apiKey = apiKey;
 
       let forecastData = null;
-      const forecastRes = await fetch(`${API_BASE}/api/weather/forecast?${forecastParams.toString()}`);
+      const forecastRes = await fetchApi('/api/weather/forecast', forecastParams);
       if (forecastRes.ok) {
         forecastData = await forecastRes.json();
         setForecast(forecastData);
       }
 
       // Step 4: Fetch Air Pollution Index
-      const pollutionParams = new URLSearchParams({
-        lat: targetLat,
-        lon: targetLon,
-      });
-      if (resolvedName) pollutionParams.append('city', resolvedName);
-      if (apiKey) pollutionParams.append('apiKey', apiKey);
+      const pollutionParams = { lat: targetLat, lon: targetLon };
+      if (resolvedName) pollutionParams.city = resolvedName;
+      if (apiKey) pollutionParams.apiKey = apiKey;
 
       let pollutionData = null;
-      const pollutionRes = await fetch(`${API_BASE}/api/weather/pollution?${pollutionParams.toString()}`);
+      const pollutionRes = await fetchApi('/api/weather/pollution', pollutionParams);
       if (pollutionRes.ok) {
         pollutionData = await pollutionRes.json();
         setPollution(pollutionData);
@@ -208,10 +198,10 @@ export function useGeocoding(searchQuery) {
     setIsSearching(true);
     setGeoError(null);
 
-    const params = new URLSearchParams({ query: trimmed });
-    if (apiKey) params.append('apiKey', apiKey);
+    const params = { query: trimmed };
+    if (apiKey) params.apiKey = apiKey;
 
-    fetch(`${API_BASE}/api/weather/geocoding?${params.toString()}`)
+    fetchApi('/api/weather/geocoding', params)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (isMounted) {
@@ -240,3 +230,4 @@ export function useGeocoding(searchQuery) {
 
   return { suggestions, isSearching, geoError };
 }
+

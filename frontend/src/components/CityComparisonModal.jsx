@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ArrowRightLeft, Thermometer, Wind, Droplets, Gauge, Eye, Sun, CloudRain } from 'lucide-react';
 import { useWeatherContext } from '../context/WeatherContext';
 import { formatTemp, formatWind, getAqiInfo } from '../utils/formatters';
+import { fetchApi } from '../utils/api';
 
 const POPULAR_COMPARISON_CITIES = [
   { name: 'Chennai', country: 'IN', lat: 13.0827, lon: 80.2707 },
@@ -24,16 +25,16 @@ export default function CityComparisonModal({ isOpen, onClose, currentWeather })
     if (!isOpen || !city2) return;
     setLoading2(true);
 
-    const params = new URLSearchParams();
+    const params = {};
     if (city2.lat && city2.lon) {
-      params.append('lat', city2.lat);
-      params.append('lon', city2.lon);
+      params.lat = city2.lat;
+      params.lon = city2.lon;
     } else {
-      params.append('city', city2.name);
+      params.city = city2.name;
     }
-    if (apiKey) params.append('apiKey', apiKey);
+    if (apiKey) params.apiKey = apiKey;
 
-    fetch(`/api/weather/current?${params.toString()}`)
+    fetchApi('/api/weather/current', params)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setWeather2(data))
       .catch((err) => console.error('Comparison fetch error:', err))
