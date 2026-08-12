@@ -62,6 +62,17 @@ public class WeatherController {
         return weatherService.getGeocoding(query, key);
     }
 
+    @GetMapping("/reverse-geocoding")
+    public List<Map<String, Object>> getReverseGeocoding(
+            @RequestParam Double lat,
+            @RequestParam Double lon,
+            @RequestParam(required = false) String apiKey,
+            @RequestHeader(name = "X-Api-Key", required = false) String headerApiKey
+    ) {
+        String key = (apiKey != null && !apiKey.isEmpty()) ? apiKey : headerApiKey;
+        return weatherService.getReverseGeocoding(lat, lon, key);
+    }
+
     @GetMapping("/health")
     public Map<String, String> getHealth() {
         Map<String, String> health = new HashMap<>();

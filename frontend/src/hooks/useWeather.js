@@ -96,9 +96,12 @@ export function useWeather() {
 
       const weatherRes = await fetchApi('/api/weather/current', weatherParams);
       if (!weatherRes.ok) {
-        throw new Error('Location not found. Please try a different city, town, or country.');
+        throw new Error('Unable to retrieve weather data for this location. Please check your connection or try another city.');
       }
       const weatherData = await weatherRes.json();
+      if (!weatherData || !weatherData.main) {
+        throw new Error('Unable to retrieve weather data for this location. Please check your connection or API key.');
+      }
 
       if (resolvedState) weatherData.state = resolvedState;
       if (resolvedCountry) {

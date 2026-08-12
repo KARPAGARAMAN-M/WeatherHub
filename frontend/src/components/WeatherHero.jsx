@@ -181,7 +181,7 @@ export default function WeatherHero({ currentWeather }) {
             <span>• Timezone: <strong>{getTimezoneLabel(timezone, resolvedCountry)}</strong></span>
           </div>
 
-          {/* Date & Dual Time Display (Location Local Time + IST) */}
+          {/* Date & Dual Time Display (Location Local Time + Last Updated) */}
           <div
             style={{
               fontSize: '0.88rem',
@@ -206,14 +206,22 @@ export default function WeatherHero({ currentWeather }) {
               </span>
             </div>
 
-            {resolvedCountry !== 'IN' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Clock size={15} style={{ opacity: 0.7 }} />
-                <span>
-                  IST: <strong style={{ color: 'var(--color-text)' }}>{formatTimeIST(dt)}</strong>
-                </span>
-              </div>
-            )}
+            <span
+              style={{
+                fontSize: '0.76rem',
+                fontWeight: '700',
+                padding: '3px 10px',
+                borderRadius: 'var(--radius-pill)',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid var(--card-border)',
+                color: 'var(--color-text-secondary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              Updated: {formatTime(dt, timezone)}
+            </span>
           </div>
 
           {/* Temperature & Exact Meteorological Condition Badge */}

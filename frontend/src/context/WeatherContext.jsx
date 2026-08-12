@@ -80,32 +80,41 @@ export function WeatherProvider({ children }) {
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            const params = { lat: latitude, lon: longitude };
-            if (apiKey) params.apiKey = apiKey;
+            const geoParams = { lat: latitude, lon: longitude };
+            if (apiKey) geoParams.apiKey = apiKey;
 
-            const res = await fetchApi('/api/weather/current', params);
-            if (res.ok) {
-              const data = await res.json();
-              setActiveCity({
-                name: data.name || 'Current Location',
-                state: data.state || '',
-                country: data.sys?.country || '',
-                lat: latitude,
-                lon: longitude,
-                isCurrentLocation: true,
-              });
-              resolve(true);
-            } else {
-              setActiveCity({
-                name: 'Current Location',
-                lat: latitude,
-                lon: longitude,
-                isCurrentLocation: true,
-              });
-              resolve(true);
+            let cityName = 'Current Location';
+            let stateName = '';
+            let countryCode = '';
+
+            const revRes = await fetchApi('/api/weather/reverse-geocoding', geoParams);
+            if (revRes.ok) {
+              const revData = await revRes.json();
+              if (Array.isArray(revData) && revData.length > 0) {
+                const match = revData[0];
+                cityName = match.name || cityName;
+                stateName = match.state || '';
+                countryCode = match.country || '';
+              }
             }
+
+            setActiveCity({
+              name: cityName,
+              state: stateName,
+              country: countryCode,
+              lat: latitude,
+              lon: longitude,
+              isCurrentLocation: true,
+            });
+            resolve(true);
           } catch (e) {
-            resolve(false);
+            setActiveCity({
+              name: 'Current Location',
+              lat: latitude,
+              lon: longitude,
+              isCurrentLocation: true,
+            });
+            resolve(true);
           }
         },
         (error) => {

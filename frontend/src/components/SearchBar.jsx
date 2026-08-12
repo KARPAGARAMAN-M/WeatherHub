@@ -1,19 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, Loader2, X, ChevronRight, Globe } from 'lucide-react';
+import { Search, MapPin, Loader2, X, ChevronRight, Globe, Navigation } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useGeocoding } from '../hooks/useWeather';
 import { useWeatherContext } from '../context/WeatherContext';
 import { getCountryName } from '../utils/formatters';
 
 export default function SearchBar() {
-  const { setActiveCity } = useWeatherContext();
+  const { setActiveCity, detectCurrentLocation } = useWeatherContext();
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isDetecting, setIsDetecting] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const { suggestions, isSearching } = useGeocoding(debouncedQuery);
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
+
+  const handleUseMyLocation = async () => {
+    setIsDetecting(true);
+    try {
+      await detectCurrentLocation();
+      setQuery('');
+      setIsOpen(false);
+    } finally {
+      setIsDetecting(false);
+    }
+  };
 
   // Close dropdown on outside click or touch
   useEffect(() => {
@@ -154,8 +166,43 @@ export default function SearchBar() {
       </form>
 
       {/* Floating Glassmorphic Autocomplete Dropdown */}
-      {isOpen && (query.trim().length >= 1 || isSearching) && (
+      {isOpen && (
         <div className="search-dropdown">
+          {/* Quick Option: Use My Location */}
+          <div
+            className="search-suggestion-item"
+            onClick={handleUseMyLocation}
+            style={{
+              borderBottom: '1px solid var(--card-border)',
+              padding: '12px 18px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  padding: '8px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: 'var(--color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Navigation size={16} className={isDetecting ? 'animate-spin' : ''} />
+              </div>
+              <div>
+                <div style={{ fontWeight: '800', color: 'var(--color-primary)', fontSize: '0.94rem' }}>
+                  Use My Current Location
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>
+                  Detect GPS location automatically
+                </div>
+              </div>
+            </div>
+            <ChevronRight size={16} style={{ color: 'var(--color-primary)', opacity: 0.8 }} />
+          </div>
+
           {isSearching && (
             <div
               style={{
@@ -173,7 +220,7 @@ export default function SearchBar() {
             </div>
           )}
 
-          {!isSearching && suggestions.length === 0 && (
+          {!isSearching && query.trim().length >= 1 && suggestions.length === 0 && (
             <div style={{ padding: '16px 18px', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
               Location not found. Please try a different city, district, state, or country.
             </div>
