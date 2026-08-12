@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@SuppressWarnings("unchecked")
 public class WeatherService {
 
     @Value("${openweather.api.key:}")
