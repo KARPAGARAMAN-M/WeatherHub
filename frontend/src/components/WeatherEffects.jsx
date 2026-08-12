@@ -142,25 +142,21 @@ export default function WeatherEffects() {
         });
       }
 
-      // --- Gentle Sun Glow during Daytime / Clear / Sunrise / Sunset ---
-      if (activeKey === 'Clear' || activeKey === 'Sunrise' || activeKey === 'Sunset') {
+      // --- Gentle Horizon Glow during Sunrise / Sunset ---
+      if (activeKey === 'Sunrise' || activeKey === 'Sunset') {
         sunAngle += 0.005;
         const sunX = activeKey === 'Sunrise' ? canvas.width * 0.2 : canvas.width * 0.8;
-        const sunY = activeKey === 'Sunrise' || activeKey === 'Sunset' ? canvas.height * 0.35 : canvas.height * 0.2;
-        const sunRadius = 170 + Math.sin(sunAngle) * 20;
+        const sunY = canvas.height * 0.35;
+        const sunRadius = 220 + Math.sin(sunAngle) * 20;
 
-        const sunGrad = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, sunRadius);
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 30, sunX, sunY, sunRadius);
         if (activeKey === 'Sunrise') {
-          sunGrad.addColorStop(0, 'rgba(251, 146, 60, 0.4)');
-          sunGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.2)');
-          sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        } else if (activeKey === 'Sunset') {
-          sunGrad.addColorStop(0, 'rgba(249, 115, 22, 0.42)');
-          sunGrad.addColorStop(0.5, 'rgba(192, 38, 211, 0.22)');
+          sunGrad.addColorStop(0, 'rgba(251, 146, 60, 0.25)');
+          sunGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.12)');
           sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         } else {
-          sunGrad.addColorStop(0, 'rgba(251, 191, 36, 0.38)');
-          sunGrad.addColorStop(0.5, 'rgba(14, 165, 233, 0.18)');
+          sunGrad.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
+          sunGrad.addColorStop(0.5, 'rgba(192, 38, 211, 0.12)');
           sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         }
 
@@ -311,9 +307,9 @@ export default function WeatherEffects() {
             height: '55vw',
             maxWidth: '650px',
             maxHeight: '650px',
-            background: `radial-gradient(circle, ${theme?.ambientColor || 'rgba(251, 191, 36, 0.35)'} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${theme?.ambientColor || 'rgba(56, 189, 248, 0.2)'} 0%, transparent 70%)`,
             borderRadius: '50%',
-            filter: 'blur(70px)',
+            filter: 'blur(90px)',
             transition: 'background 500ms ease, opacity 500ms ease',
           }}
         />

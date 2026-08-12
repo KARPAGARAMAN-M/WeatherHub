@@ -8,20 +8,20 @@ export const WEATHER_THEMES = {
     key: 'Clear',
     name: 'Clear Day',
     emoji: '☀️',
-    primary: '#FBBF24',        // Warm Sun Yellow
-    sky: '#38BDF8',            // Luminous Sky Cyan
-    accent: '#0EA5E9',         // Bright Sky Blue Accent
-    primaryGlow: 'rgba(251, 191, 36, 0.45)',
-    bgGradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 35%, #38BDF8 70%, #7DD3FC 100%)',
+    primary: '#38BDF8',        // Luminous Sky Cyan
+    sky: '#0EA5E9',            // Bright Sky Blue
+    accent: '#F59E0B',         // Warm Sunlight Gold
+    primaryGlow: 'rgba(56, 189, 248, 0.25)',
+    bgGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 35%, #0EA5E9 70%, #38BDF8 100%)',
     cardBg: 'rgba(255, 255, 255, 0.16)',
     cardBorder: 'rgba(255, 255, 255, 0.35)',
-    cardHoverBorder: 'rgba(251, 191, 36, 0.8)',
-    ambientColor: 'rgba(251, 191, 36, 0.45)',
-    ambientSecondary: 'rgba(14, 165, 233, 0.3)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
+    ambientColor: 'rgba(56, 189, 248, 0.2)',
+    ambientSecondary: 'rgba(14, 165, 233, 0.15)',
     textColor: '#FFFFFF',
     textSecondary: 'rgba(255, 255, 255, 0.9)',
-    badgeBg: 'rgba(251, 191, 36, 0.28)',
-    badgeText: '#FFFBEB',
+    badgeBg: 'rgba(56, 189, 248, 0.22)',
+    badgeText: '#FFFFFF',
   },
   Night: {
     key: 'Night',

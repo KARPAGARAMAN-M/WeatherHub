@@ -6,21 +6,21 @@
 
 :root {
   /* Default dynamic variables (Overridden by applyThemeToDOM with 500ms transitions) */
-  --color-primary: #FBBF24;
-  --color-sky: #38BDF8;
-  --color-accent: #0EA5E9;
-  --color-primary-glow: rgba(251, 191, 36, 0.45);
-  --bg-gradient: linear-gradient(135deg, #0EA5E9 0%, #0284C7 35%, #38BDF8 70%, #7DD3FC 100%);
+  --color-primary: #38BDF8;
+  --color-sky: #0EA5E9;
+  --color-accent: #F59E0B;
+  --color-primary-glow: rgba(56, 189, 248, 0.25);
+  --bg-gradient: linear-gradient(135deg, #0284C7 0%, #0369A1 35%, #0EA5E9 70%, #38BDF8 100%);
   --card-bg: rgba(255, 255, 255, 0.16);
   --card-border: rgba(255, 255, 255, 0.35);
-  --card-border-hover: rgba(251, 191, 36, 0.8);
-  --ambient-color: rgba(251, 191, 36, 0.45);
-  --ambient-secondary: rgba(14, 165, 233, 0.3);
+  --card-border-hover: rgba(56, 189, 248, 0.8);
+  --ambient-color: rgba(56, 189, 248, 0.2);
+  --ambient-secondary: rgba(14, 165, 233, 0.15);
   --color-text: #FFFFFF;
   --color-text-secondary: rgba(255, 255, 255, 0.9);
   --color-text-muted: rgba(255, 255, 255, 0.65);
-  --badge-bg: rgba(251, 191, 36, 0.28);
-  --badge-text: #FFFBEB;
+  --badge-bg: rgba(56, 189, 248, 0.22);
+  --badge-text: #FFFFFF;
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
