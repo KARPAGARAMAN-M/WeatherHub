@@ -61,9 +61,12 @@ export default function WeatherHero({ currentWeather }) {
   const resolvedState = state || activeCity?.state || '';
   const resolvedCountry = sys?.country || activeCity?.country || '';
   const resolvedDistrict = activeCity?.district || activeCity?.county || '';
+  const resolvedLocality = activeCity?.locality || '';
+  const resolvedCity = activeCity?.city || '';
 
   const cityObj = {
     name,
+    locality: resolvedLocality,
     state: resolvedState,
     country: resolvedCountry,
     lat: coord?.lat,
@@ -73,6 +76,8 @@ export default function WeatherHero({ currentWeather }) {
   const isSaved = isCitySaved(cityObj);
   const locationTitle = formatLocationTitle({
     name,
+    locality: resolvedLocality,
+    city: resolvedCity,
     district: resolvedDistrict,
     state: resolvedState,
     country: resolvedCountry

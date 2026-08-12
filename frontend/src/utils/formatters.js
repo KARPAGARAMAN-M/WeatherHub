@@ -356,26 +356,29 @@ export function getCountryName(countryCode) {
  * Street / Area -> Village / Town / City -> District / County -> State -> Country
  * Example: "Westminster, Greater London, England, United Kingdom"
  */
-export function formatLocationTitle({ name, village, town, district, state, country }) {
+export function formatLocationTitle({ name, locality, village, town, district, city, state, country }) {
   const parts = [];
 
-  const firstLevel = village || town || name;
+  const firstLevel = locality || village || town || (name && name !== 'Current Location' ? name : '') || (city && city !== 'Current Location' ? city : '');
   if (firstLevel) parts.push(firstLevel);
 
-  if (district && district.trim().toLowerCase() !== firstLevel?.trim().toLowerCase()) {
-    parts.push(district.trim());
+  const secondLevel = district || (city && city !== firstLevel ? city : '') || (name && name !== firstLevel && name !== 'Current Location' ? name : '');
+  if (secondLevel && secondLevel.trim().toLowerCase() !== firstLevel?.trim().toLowerCase()) {
+    parts.push(secondLevel.trim());
   }
 
-  if (state && state.trim().toLowerCase() !== firstLevel?.trim().toLowerCase() && state.trim().toLowerCase() !== district?.trim().toLowerCase()) {
+  if (state && state.trim().toLowerCase() !== firstLevel?.trim().toLowerCase() && state.trim().toLowerCase() !== secondLevel?.trim().toLowerCase()) {
     parts.push(state.trim());
   }
 
   if (country) {
     const fullCountry = getCountryName(country.trim());
-    parts.push(fullCountry);
+    if (fullCountry && !parts.some(p => p.toLowerCase() === fullCountry.toLowerCase())) {
+      parts.push(fullCountry);
+    }
   }
 
-  return parts.join(', ');
+  return parts.length > 0 ? parts.join(', ') : 'Current Location';
 }
 
 /**

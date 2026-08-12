@@ -219,11 +219,35 @@ public class WeatherService {
             Map<String, Object> res = restTemplate.getForObject(url, Map.class);
             if (res != null && !res.isEmpty()) {
                 Map<String, Object> map = new HashMap<>();
-                String city = (String) res.getOrDefault("city", res.getOrDefault("locality", res.getOrDefault("principalSubdivision", "Current Location")));
+                String locality = (String) res.getOrDefault("locality", "");
+                String city = (String) res.getOrDefault("city", "");
                 String state = (String) res.getOrDefault("principalSubdivision", "");
                 String country = (String) res.getOrDefault("countryCode", "");
+                String district = "";
 
-                map.put("name", city);
+                if (res.get("localityInfo") instanceof Map) {
+                    Map locInfo = (Map) res.get("localityInfo");
+                    if (locInfo.get("administrative") instanceof List) {
+                        List adminList = (List) locInfo.get("administrative");
+                        for (Object item : adminList) {
+                            if (item instanceof Map) {
+                                Map aMap = (Map) item;
+                                String desc = String.valueOf(aMap.getOrDefault("description", "")).toLowerCase();
+                                if (desc.contains("district") && aMap.containsKey("name")) {
+                                    district = (String) aMap.get("name");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                String displayName = !locality.isEmpty() ? locality : (!city.isEmpty() ? city : (!state.isEmpty() ? state : "Current Location"));
+
+                map.put("name", displayName);
+                map.put("locality", locality);
+                map.put("city", city);
+                map.put("district", district);
                 map.put("state", state);
                 map.put("country", country);
                 map.put("lat", lat);

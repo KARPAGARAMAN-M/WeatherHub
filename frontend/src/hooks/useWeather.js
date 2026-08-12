@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useWeatherContext } from '../context/WeatherContext';
 import { useThemeContext } from '../context/ThemeContext';
 import { fetchApi } from '../utils/api';
+import {
+  fetchDirectOpenMeteoCurrent,
+  fetchDirectOpenMeteoForecast,
+  fetchDirectOpenMeteoPollution,
+} from '../utils/openMeteoClient';
 
 /**
  * Custom Hook: useWeather
@@ -33,6 +38,8 @@ export function useWeather() {
     let targetLon = activeCity?.lon;
     let resolvedState = activeCity?.state || '';
     let resolvedCountry = activeCity?.country || '';
+    let resolvedDistrict = activeCity?.district || '';
+    let resolvedLocality = activeCity?.locality || '';
     let resolvedName = locationName;
 
     const cacheKey = `${targetLat}_${targetLon}_${locationName}_${apiKey}`;
@@ -62,21 +69,40 @@ export function useWeather() {
     setError(null);
 
     try {
-      // Step 1: If latitude and longitude are not directly available, resolve them via OpenWeather Geocoding API
+      // Step 1: If latitude and longitude are not directly available, resolve them via Geocoding
       if (targetLat == null || targetLon == null) {
         if (!locationName) {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
 
-        const geoParams = { query: locationName };
-        if (apiKey) geoParams.apiKey = apiKey;
-
-        const geoRes = await fetchApi('/api/weather/geocoding', geoParams);
-        if (!geoRes.ok) {
-          throw new Error('Location not found. Please try a different city, town, or country.');
+        let geoData = null;
+        try {
+          const geoParams = { query: locationName };
+          if (apiKey) geoParams.apiKey = apiKey;
+          const geoRes = await fetchApi('/api/weather/geocoding', geoParams);
+          if (geoRes.ok) {
+            geoData = await geoRes.json();
+          }
+        } catch (e) {
+          console.warn('Backend geocoding failed, trying direct Open-Meteo search:', e);
         }
 
-        const geoData = await geoRes.json();
+        if (!Array.isArray(geoData) || geoData.length === 0) {
+          const omGeoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName)}&count=5&language=en&format=json`);
+          if (omGeoRes.ok) {
+            const omGeoData = await omGeoRes.json();
+            if (omGeoData?.results?.length > 0) {
+              geoData = omGeoData.results.map(r => ({
+                name: r.name,
+                lat: r.latitude,
+                lon: r.longitude,
+                state: r.admin1 || '',
+                country: r.country_code || '',
+              }));
+            }
+          }
+        }
+
         if (!Array.isArray(geoData) || geoData.length === 0) {
           throw new Error('Location not found. Please try a different city, town, or country.');
         }
@@ -89,26 +115,41 @@ export function useWeather() {
         resolvedCountry = primaryMatch.country || resolvedCountry;
       }
 
-      // Step 2: Fetch Current Weather
-      const weatherParams = { lat: targetLat, lon: targetLon };
-      if (resolvedName) weatherParams.city = resolvedName;
-      if (apiKey) weatherParams.apiKey = apiKey;
+      // Step 2: Fetch Current Weather (via Backend Proxy or Direct Open-Meteo)
+      let weatherData = null;
+      try {
+        const weatherParams = { lat: targetLat, lon: targetLon };
+        if (resolvedName && resolvedName !== 'Current Location') weatherParams.city = resolvedName;
+        if (apiKey) weatherParams.apiKey = apiKey;
 
-      const weatherRes = await fetchApi('/api/weather/current', weatherParams);
-      if (!weatherRes.ok) {
-        throw new Error('Unable to retrieve weather data for this location. Please check your connection or try another city.');
+        const weatherRes = await fetchApi('/api/weather/current', weatherParams);
+        if (weatherRes.ok) {
+          weatherData = await weatherRes.json();
+        }
+      } catch (err) {
+        console.warn('Backend weather fetch failed, using direct Open-Meteo meteorological client:', err);
       }
-      const weatherData = await weatherRes.json();
+
       if (!weatherData || !weatherData.main) {
-        throw new Error('Unable to retrieve weather data for this location. Please check your connection or API key.');
+        weatherData = await fetchDirectOpenMeteoCurrent(targetLat, targetLon, {
+          name: resolvedName,
+          state: resolvedState,
+          country: resolvedCountry,
+          district: resolvedDistrict,
+          locality: resolvedLocality,
+        });
       }
 
       if (resolvedState) weatherData.state = resolvedState;
+      if (resolvedDistrict) weatherData.district = resolvedDistrict;
+      if (resolvedLocality) weatherData.locality = resolvedLocality;
       if (resolvedCountry) {
         if (!weatherData.sys) weatherData.sys = {};
         weatherData.sys.country = resolvedCountry;
       }
-      if (resolvedName) weatherData.name = resolvedName;
+      if (resolvedName && resolvedName !== 'Current Location') {
+        weatherData.name = resolvedName;
+      }
 
       setCurrentWeather(weatherData);
 
@@ -122,28 +163,44 @@ export function useWeather() {
       }
 
       // Step 3: Fetch 5-Day / 3-Hour Forecast
-      const forecastParams = { lat: targetLat, lon: targetLon };
-      if (resolvedName) forecastParams.city = resolvedName;
-      if (apiKey) forecastParams.apiKey = apiKey;
-
       let forecastData = null;
-      const forecastRes = await fetchApi('/api/weather/forecast', forecastParams);
-      if (forecastRes.ok) {
-        forecastData = await forecastRes.json();
-        setForecast(forecastData);
+      try {
+        const forecastParams = { lat: targetLat, lon: targetLon };
+        if (resolvedName && resolvedName !== 'Current Location') forecastParams.city = resolvedName;
+        if (apiKey) forecastParams.apiKey = apiKey;
+
+        const forecastRes = await fetchApi('/api/weather/forecast', forecastParams);
+        if (forecastRes.ok) {
+          forecastData = await forecastRes.json();
+        }
+      } catch (err) {
+        console.warn('Backend forecast fetch failed, using direct client:', err);
       }
+
+      if (!forecastData || !forecastData.list) {
+        forecastData = await fetchDirectOpenMeteoForecast(targetLat, targetLon);
+      }
+      setForecast(forecastData);
 
       // Step 4: Fetch Air Pollution Index
-      const pollutionParams = { lat: targetLat, lon: targetLon };
-      if (resolvedName) pollutionParams.city = resolvedName;
-      if (apiKey) pollutionParams.apiKey = apiKey;
-
       let pollutionData = null;
-      const pollutionRes = await fetchApi('/api/weather/pollution', pollutionParams);
-      if (pollutionRes.ok) {
-        pollutionData = await pollutionRes.json();
-        setPollution(pollutionData);
+      try {
+        const pollutionParams = { lat: targetLat, lon: targetLon };
+        if (resolvedName && resolvedName !== 'Current Location') pollutionParams.city = resolvedName;
+        if (apiKey) pollutionParams.apiKey = apiKey;
+
+        const pollutionRes = await fetchApi('/api/weather/pollution', pollutionParams);
+        if (pollutionRes.ok) {
+          pollutionData = await pollutionRes.json();
+        }
+      } catch (err) {
+        console.warn('Backend pollution fetch failed, using direct client:', err);
       }
+
+      if (!pollutionData || !pollutionData.list) {
+        pollutionData = await fetchDirectOpenMeteoPollution(targetLat, targetLon);
+      }
+      setPollution(pollutionData);
 
       // Save to client cache
       apiCache.set(cacheKey, {
@@ -201,30 +258,52 @@ export function useGeocoding(searchQuery) {
     setIsSearching(true);
     setGeoError(null);
 
-    const params = { query: trimmed };
-    if (apiKey) params.apiKey = apiKey;
+    const performSearch = async () => {
+      let results = [];
+      try {
+        const params = { query: trimmed };
+        if (apiKey) params.apiKey = apiKey;
 
-    fetchApi('/api/weather/geocoding', params)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (isMounted) {
-          const results = Array.isArray(data) ? data : [];
-          setSuggestions(results);
-          if (results.length === 0) {
-            setGeoError('Location not found. Please try a different city, town, or country.');
-          }
+        const res = await fetchApi('/api/weather/geocoding', params);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) results = data;
         }
-      })
-      .catch((err) => {
-        console.error('Geocoding fetch failed:', err);
-        if (isMounted) {
-          setSuggestions([]);
+      } catch (err) {
+        console.warn('Backend geocoding search failed, falling back to direct search:', err);
+      }
+
+      // If backend didn't return suggestions, query Open-Meteo Geocoding directly
+      if (results.length === 0) {
+        try {
+          const omRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmed)}&count=8&language=en&format=json`);
+          if (omRes.ok) {
+            const omData = await omRes.json();
+            if (Array.isArray(omData?.results)) {
+              results = omData.results.map(item => ({
+                name: item.name,
+                lat: item.latitude,
+                lon: item.longitude,
+                state: item.admin1 || '',
+                country: (item.country_code || '').toUpperCase(),
+              }));
+            }
+          }
+        } catch (omErr) {
+          console.warn('Direct Open-Meteo geocoding failed:', omErr);
+        }
+      }
+
+      if (isMounted) {
+        setSuggestions(results);
+        if (results.length === 0) {
           setGeoError('Location not found. Please try a different city, town, or country.');
         }
-      })
-      .finally(() => {
-        if (isMounted) setIsSearching(false);
-      });
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
 
     return () => {
       isMounted = false;
