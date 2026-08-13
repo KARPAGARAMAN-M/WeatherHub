@@ -19,7 +19,7 @@ export default function SearchBar() {
   const handleUseMyLocation = async () => {
     setIsDetecting(true);
     try {
-      await detectCurrentLocation();
+      await detectCurrentLocation({ isManualClick: true });
       setQuery('');
       setIsOpen(false);
     } finally {

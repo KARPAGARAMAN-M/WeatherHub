@@ -13,6 +13,8 @@ import LifestyleHealthGrid from './components/LifestyleHealthGrid';
 import PlacesGrid from './components/PlacesGrid';
 import WeatherEffects from './components/WeatherEffects';
 import ApiKeyModal from './components/ApiKeyModal';
+import LocationPermissionModal from './components/LocationPermissionModal';
+import LocationToast from './components/LocationToast';
 import InteractiveMapModal from './components/InteractiveMapModal';
 import CityComparisonModal from './components/CityComparisonModal';
 import ExportReportModal from './components/ExportReportModal';
@@ -130,6 +132,8 @@ function DashboardContent() {
 
       {/* Modals & Dialogs */}
       <ApiKeyModal />
+      <LocationPermissionModal />
+      <LocationToast />
 
       <InteractiveMapModal
         isOpen={isMapOpen}

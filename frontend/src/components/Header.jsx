@@ -5,27 +5,15 @@ import { useWeatherContext } from '../context/WeatherContext';
 import { generateSevereAlerts } from '../utils/lifestyleCalc';
 
 export default function Header({ onRefresh, onOpenMap, onOpenCompare, onOpenExport, currentWeather }) {
-  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey, detectCurrentLocation, activeCity } = useWeatherContext();
-  const [isLocating, setIsLocating] = useState(false);
+  const { setActiveCity, setIsSettingsOpen, unit, toggleUnit, apiKey, detectCurrentLocation, locationStatus } = useWeatherContext();
 
   const alerts = generateSevereAlerts(currentWeather);
   const alertCount = alerts.length;
 
-  const handleGeolocation = async () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
+  const isLocating = locationStatus === 'detecting';
 
-    setIsLocating(true);
-    try {
-      const success = await detectCurrentLocation();
-      if (!success) {
-        alert('Could not retrieve your current location. Please check browser permissions.');
-      }
-    } finally {
-      setIsLocating(false);
-    }
+  const handleGeolocation = async () => {
+    await detectCurrentLocation({ isManualClick: true });
   };
 
   return (

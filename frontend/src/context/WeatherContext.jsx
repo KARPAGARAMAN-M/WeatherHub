@@ -71,14 +71,28 @@ export function WeatherProvider({ children }) {
     localStorage.setItem('weatherhub_unit', unit);
   }, [unit]);
 
-  // Helper to reverse geocode lat & lon into precise city, neighborhood/locality, district, state, and country
+  const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'detecting' | 'granted' | 'denied' | 'error'
+  const [locationToast, setLocationToast] = useState(null);
+  const [showLocationPromptModal, setShowLocationPromptModal] = useState(false);
+
+  const showToast = (message, type = 'info', title = '') => {
+    setLocationToast({ message, type, title, id: Date.now() });
+  };
+
+  const dismissToast = () => {
+    setLocationToast(null);
+  };
+
+  // Helper to reverse geocode lat & lon into precise locality, district, state, country, and postal code
   const reverseGeocodeCoords = async (latitude, longitude) => {
     let resolved = {
       name: '',
       locality: '',
+      city: '',
       district: '',
       state: '',
       country: '',
+      postalCode: '',
       lat: latitude,
       lon: longitude,
       isCurrentLocation: true,
@@ -93,11 +107,13 @@ export function WeatherProvider({ children }) {
         const revData = await revRes.json();
         if (Array.isArray(revData) && revData.length > 0) {
           const match = revData[0];
-          resolved.name = match.name || '';
-          resolved.locality = match.locality || '';
-          resolved.district = match.district || '';
-          resolved.state = match.state || '';
-          resolved.country = match.country || '';
+          resolved.name = match.name || match.locality || match.city || '';
+          resolved.locality = match.locality || match.suburb || match.village || match.town || '';
+          resolved.city = match.city || '';
+          resolved.district = match.district || match.county || '';
+          resolved.state = match.state || match.region || '';
+          resolved.country = match.country || match.country_code || '';
+          resolved.postalCode = match.postalCode || match.zip || match.postcode || '';
         }
       }
     } catch (e) {
@@ -111,42 +127,48 @@ export function WeatherProvider({ children }) {
         const bdcRes = await fetch(bdcUrl);
         if (bdcRes.ok) {
           const bdcData = await bdcRes.json();
-          const locality = bdcData.locality || bdcData.localityInfo?.administrative?.find(a => a.adminLevel === 4)?.name || '';
+          const locality = bdcData.locality || bdcData.localityInfo?.administrative?.find(a => a.adminLevel === 4 || a.adminLevel === 5)?.name || '';
           const city = bdcData.city || bdcData.localityInfo?.administrative?.find(a => a.adminLevel === 3 || a.adminLevel === 2)?.name || '';
-          const district = bdcData.localityInfo?.administrative?.find(a => a.description?.includes('district') || a.adminLevel === 2)?.name || '';
+          const district = bdcData.localityInfo?.administrative?.find(a => a.description?.toLowerCase().includes('district') || a.adminLevel === 2)?.name || '';
           const state = bdcData.principalSubdivision || '';
           const country = bdcData.countryCode || '';
+          const postcode = bdcData.postcode || bdcData.localityInfo?.postcode || '';
 
-          resolved.name = locality || city || state || 'Current Location';
           resolved.locality = locality;
-          resolved.district = district || (city !== locality ? city : '');
+          resolved.city = city;
+          resolved.district = district || (city && city !== locality ? city : '');
           resolved.state = state;
           resolved.country = country;
+          resolved.postalCode = postcode;
+          resolved.name = locality || city || district || state || 'Current Location';
         }
       } catch (e) {
         console.warn('Direct BigDataCloud reverse geocode error:', e);
       }
     }
 
-    // 3. Direct Nominatim OpenStreetMap fallback if still needed
-    if (!resolved.name || resolved.name === 'Current Location') {
+    // 3. Direct Nominatim OpenStreetMap fallback if still missing details
+    if (!resolved.name || resolved.name === 'Current Location' || !resolved.locality) {
       try {
         const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`;
         const nomRes = await fetch(nomUrl, { headers: { 'Accept-Language': 'en' } });
         if (nomRes.ok) {
           const nomData = await nomRes.json();
           const addr = nomData.address || {};
-          const locality = addr.suburb || addr.neighbourhood || addr.residential || addr.village || addr.town || addr.city_district || '';
+          const locality = addr.suburb || addr.neighbourhood || addr.residential || addr.village || addr.town || addr.city_district || addr.hamlet || '';
           const city = addr.city || addr.town || addr.municipality || '';
-          const district = addr.county || addr.district || '';
-          const state = addr.state || '';
+          const district = addr.county || addr.district || addr.state_district || '';
+          const state = addr.state || addr.region || '';
           const country = (addr.country_code || '').toUpperCase();
+          const postcode = addr.postcode || '';
 
-          resolved.name = locality || city || district || 'Current Location';
-          resolved.locality = locality;
-          resolved.district = district || (city !== locality ? city : '');
-          resolved.state = state;
-          resolved.country = country;
+          resolved.locality = resolved.locality || locality;
+          resolved.city = resolved.city || city;
+          resolved.district = resolved.district || district;
+          resolved.state = resolved.state || state;
+          resolved.country = resolved.country || country;
+          resolved.postalCode = resolved.postalCode || postcode;
+          resolved.name = resolved.locality || resolved.city || locality || city || district || 'Current Location';
         }
       } catch (e) {
         console.warn('Nominatim reverse geocode error:', e);
@@ -160,107 +182,106 @@ export function WeatherProvider({ children }) {
     return resolved;
   };
 
-  // Helper to detect approximate location by IP when browser GPS is blocked/unavailable
-  const detectLocationByIp = async () => {
-    try {
-      const ipRes = await fetch('https://ipapi.co/json/');
-      if (ipRes.ok) {
-        const data = await ipRes.json();
-        if (data.latitude && data.longitude) {
-          return {
-            name: data.city || data.region || 'Current Location',
-            district: data.city || '',
-            state: data.region || '',
-            country: data.country_code || '',
-            lat: data.latitude,
-            lon: data.longitude,
-            isCurrentLocation: true,
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('ipapi.co failed, trying ipwho.is:', e);
+  // Function to perform high-accuracy GPS geolocation detection
+  const detectCurrentLocation = async (options = {}) => {
+    const { isManualClick = false } = options;
+
+    if (!navigator.geolocation) {
+      const msg = 'Geolocation is not supported by your browser.';
+      showToast(msg, 'error', 'Geolocation Unsupported');
+      setLocationStatus('error');
+      return false;
     }
 
-    try {
-      const ipWhoRes = await fetch('https://ipwho.is/');
-      if (ipWhoRes.ok) {
-        const data = await ipWhoRes.json();
-        if (data.success && data.latitude && data.longitude) {
-          return {
-            name: data.city || data.region || 'Current Location',
-            district: data.city || '',
-            state: data.region || '',
-            country: data.country_code || '',
-            lat: data.latitude,
-            lon: data.longitude,
-            isCurrentLocation: true,
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('ipwho.is fallback failed:', e);
-    }
+    setLocationStatus('detecting');
+    showToast('Detecting your location...', 'info', 'GPS Geolocation');
 
-    return null;
-  };
-
-  // Function to detect exact current user location via Geolocation API + IP fallback
-  const detectCurrentLocation = async () => {
-    let detectedLocation = null;
-
-    // Attempt 1: Browser GPS / Hardware Geolocation with maximum accuracy and no cache
-    if (navigator.geolocation) {
-      const gpsSuccess = await new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              const { latitude, longitude } = position.coords;
-              const locationData = await reverseGeocodeCoords(latitude, longitude);
-              detectedLocation = locationData;
-              setActiveCity(locationData);
-              resolve(true);
-            } catch (err) {
-              console.warn('Error processing GPS coordinates:', err);
-              resolve(false);
-            }
-          },
-          (error) => {
-            console.warn('Browser GPS geolocation error/denied:', error.message);
+    const result = await new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const locationData = await reverseGeocodeCoords(latitude, longitude);
+            
+            setActiveCity(locationData);
+            setLocationStatus('granted');
+            showToast(`Location detected: ${locationData.name}`, 'success', 'GPS Location Set');
+            resolve(true);
+          } catch (err) {
+            console.warn('Error processing GPS coordinates:', err);
+            showToast('Error processing location coordinates.', 'error', 'GPS Error');
+            setLocationStatus('error');
             resolve(false);
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      });
+          }
+        },
+        (error) => {
+          setLocationStatus('denied');
+          let errMsg = 'Unable to determine your location.';
+          let errTitle = 'Location Error';
 
-      if (gpsSuccess && detectedLocation) return true;
-    }
+          if (error.code === error.PERMISSION_DENIED) {
+            errMsg = 'Location access was denied. Enable location permission in your browser settings to use your current location.';
+            errTitle = 'Permission Denied';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errMsg = 'Unable to determine your current location. Please try again or search manually.';
+            errTitle = 'Location Unavailable';
+          } else if (error.code === error.TIMEOUT) {
+            errMsg = 'Location detection timed out. Please try again.';
+            errTitle = 'Request Timeout';
+          }
 
-    // Attempt 2: IP-based Location Fallback (if browser GPS was denied, timed out, or unavailable on desktop)
-    const ipLocation = await detectLocationByIp();
-    if (ipLocation) {
-      const refined = await reverseGeocodeCoords(ipLocation.lat, ipLocation.lon);
-      const finalLocation = {
-        ...refined,
-        name: refined.name !== 'Current Location' ? refined.name : ipLocation.name,
-        state: refined.state || ipLocation.state,
-        country: refined.country || ipLocation.country,
-        lat: ipLocation.lat,
-        lon: ipLocation.lon,
-        isCurrentLocation: true,
-      };
-      setActiveCity(finalLocation);
-      return true;
-    }
+          showToast(errMsg, 'error', errTitle);
+          console.warn('Browser GPS geolocation error:', error.message);
+          resolve(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
 
-    return false;
+    return result;
   };
 
-  // Auto-detect user's current location whenever app is opened newly if setting enabled
-  useEffect(() => {
-    if (useCurrentLocationOnLaunch) {
-      detectCurrentLocation();
+  // Check initial browser Geolocation permission status on application startup
+  const checkStartupLocationPermission = async () => {
+    // If user has explicitly dismissed or disabled auto GPS on launch, honor setting
+    const hasSeenPrompt = localStorage.getItem('weatherhub_startup_prompt_dismissed') === 'true';
+
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+
+        if (permissionStatus.state === 'granted') {
+          detectCurrentLocation();
+        } else if (permissionStatus.state === 'prompt') {
+          if (!hasSeenPrompt && useCurrentLocationOnLaunch) {
+            setShowLocationPromptModal(true);
+          }
+        } else if (permissionStatus.state === 'denied') {
+          setLocationStatus('denied');
+          // Keep existing activeCity as fallback without repeatedly requesting
+        }
+
+        permissionStatus.onchange = () => {
+          if (permissionStatus.state === 'granted') {
+            detectCurrentLocation();
+          } else if (permissionStatus.state === 'denied') {
+            setLocationStatus('denied');
+          }
+        };
+        return;
+      } catch (e) {
+        console.warn('Browser does not support permissions.query for geolocation:', e);
+      }
     }
+
+    // Fallback if permissions.query API is unavailable
+    if (useCurrentLocationOnLaunch && !hasSeenPrompt) {
+      setShowLocationPromptModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkStartupLocationPermission();
   }, []); // Run on initial launch / app mount
 
   const updateApiKey = (key) => {
@@ -341,6 +362,12 @@ export function WeatherProvider({ children }) {
         useCurrentLocationOnLaunch,
         setUseCurrentLocationOnLaunch,
         detectCurrentLocation,
+        locationStatus,
+        locationToast,
+        showLocationPromptModal,
+        setShowLocationPromptModal,
+        showToast,
+        dismissToast,
       }}
     >
       {children}
