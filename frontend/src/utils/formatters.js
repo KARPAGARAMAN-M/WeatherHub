@@ -352,33 +352,151 @@ export function getCountryName(countryCode) {
 }
 
 /**
- * Formats full location string with hierarchical precision:
- * Street / Area -> Village / Town / City -> District / County -> State -> Country
- * Example: "Westminster, Greater London, England, United Kingdom"
+ * Extracts natural, informative weather description generated from live API metrics.
  */
-export function formatLocationTitle({ name, locality, village, town, district, city, state, country }) {
+export function generateNaturalWeatherDescription(weatherData) {
+  if (!weatherData) return 'Clear sky';
+  const weatherObj = weatherData.weather?.[0] || {};
+  const code = weatherObj.id || 0;
+  const main = (weatherObj.main || '').toLowerCase();
+  const desc = (weatherObj.description || '').toLowerCase();
+  const clouds = weatherData.clouds?.all != null ? weatherData.clouds.all : null;
+  const pop = weatherData.pop != null ? Math.round(weatherData.pop * 100) : null;
+  const rainMm = weatherData.rain?.['1h'] || weatherData.rain?.['3h'] || 0;
+  const windMps = weatherData.wind?.speed || 0;
+  const isNight = weatherData.sys?.sunrise && weatherData.sys?.sunset
+    ? (weatherData.dt < weatherData.sys.sunrise || weatherData.dt > weatherData.sys.sunset)
+    : (weatherObj.icon || '').endsWith('n');
+
+  if (code === 781 || main.includes('tornado') || desc.includes('tornado')) return 'Tornado warning with extreme winds';
+  if (code === 771 || main.includes('squall') || desc.includes('squall')) return 'Squall with sudden high wind gusts';
+  if (code === 751 || main.includes('sand') || desc.includes('sand')) return 'Sandstorm with low visibility';
+  if (code === 761 || code === 731 || main.includes('dust') || desc.includes('dust')) return 'Dusty atmosphere with reduced visibility';
+  if (code === 711 || main.includes('smoke') || desc.includes('smoke')) return 'Smoky atmosphere with poor air clarity';
+  if (code === 721 || main.includes('haze') || desc.includes('haze')) return 'Hazy atmosphere with reduced visibility';
+  if (code === 741 || main.includes('fog') || desc.includes('fog')) return 'Dense fog with low visibility';
+  if (code === 701 || main.includes('mist') || desc.includes('mist')) return 'Misty atmosphere with light moisture';
+
+  if ((code >= 200 && code <= 232) || main.includes('thunder') || desc.includes('thunder')) {
+    if (rainMm > 5 || desc.includes('heavy')) return 'Thunderstorm with heavy torrential rain and lightning';
+    return 'Thunderstorm with rain showers and lightning';
+  }
+
+  if ((code >= 600 && code <= 622) || main.includes('snow') || desc.includes('snow')) {
+    if (desc.includes('heavy')) return 'Heavy snowfall with icy conditions';
+    if (desc.includes('light')) return 'Light snow flurries with cold breeze';
+    return 'Snowfall with crisp winter air';
+  }
+
+  if ((code >= 300 && code <= 321) || main.includes('drizzle') || desc.includes('drizzle')) {
+    return 'Light drizzle with misty atmosphere';
+  }
+
+  if ((code >= 500 && code <= 531) || main.includes('rain') || desc.includes('rain')) {
+    if (code === 502 || code === 503 || code === 504 || code === 522 || rainMm >= 7.5 || desc.includes('heavy')) {
+      return 'Heavy rainfall with dark storm clouds';
+    }
+    if (code === 501 || code === 521 || rainMm >= 2.5 || desc.includes('moderate')) {
+      return 'Moderate rain with steady precipitation';
+    }
+    if (windMps > 5.5) return 'Light rain with breezy winds';
+    return 'Light rain with mild showers';
+  }
+
+  let cloudPct = clouds;
+  if (cloudPct == null) {
+    if (code === 800 || main === 'clear') cloudPct = 5;
+    else if (code === 801 || desc.includes('few')) cloudPct = 20;
+    else if (code === 802 || desc.includes('scattered') || desc.includes('partly')) cloudPct = 45;
+    else if (code === 803 || desc.includes('broken') || desc.includes('mostly')) cloudPct = 75;
+    else if (code === 804 || desc.includes('overcast')) cloudPct = 95;
+    else cloudPct = 20;
+  }
+
+  if (cloudPct <= 10) {
+    return isNight ? 'Clear night sky with starlight' : 'Clear sky with bright sunshine';
+  }
+  if (cloudPct <= 30) {
+    return isNight ? 'Mostly clear night sky' : 'Mostly clear sky with pleasant sunshine';
+  }
+  if (cloudPct <= 60) {
+    if (windMps > 5) return 'Partly cloudy with gentle breeze';
+    return 'Partly cloudy with scattered sunbeams';
+  }
+  if (cloudPct <= 85) {
+    if (pop && pop > 30) return `Mostly cloudy with ${pop}% chance of rain`;
+    return 'Mostly cloudy with occasional breaks in the clouds';
+  }
+
+  if (pop && pop > 40) return `Overcast with a high chance of rain (${pop}%)`;
+  return 'Overcast with heavy cloud cover';
+}
+
+/**
+ * Formats primary place headline (Line 1: City / Town / Locality Name)
+ */
+export function formatLocationHeadline({ name, locality, village, town, city }) {
+  if (locality) return locality;
+  if (village) return village;
+  if (town) return town;
+  if (name && name !== 'Current Location') return name;
+  if (city) return city;
+  return 'Current Location';
+}
+
+/**
+ * Formats secondary location subline with India-only District logic:
+ * India: "Salem District, Tamil Nadu, India"
+ * USA: "New York, USA"
+ */
+export function formatLocationSubline({ name, locality, city, district, county, state, country }) {
+  const countryCode = (country || '').trim().toUpperCase();
+  const isIndia = countryCode === 'IN' || countryCode === 'INDIA';
+  const fullCountry = getCountryName(country) || (isIndia ? 'India' : country);
+
   const parts = [];
 
-  const firstLevel = locality || village || town || (name && name !== 'Current Location' ? name : '') || (city && city !== 'Current Location' ? city : '');
-  if (firstLevel) parts.push(firstLevel);
+  if (isIndia) {
+    let distName = (district || county || city || '').trim();
+    if (distName) {
+      const cleanDist = distName.replace(/\bdistrict\b/gi, '').trim();
+      if (cleanDist) {
+        parts.push(`${cleanDist} District`);
+      }
+    }
 
-  const secondLevel = district || (city && city !== firstLevel ? city : '') || (name && name !== firstLevel && name !== 'Current Location' ? name : '');
-  if (secondLevel && secondLevel.trim().toLowerCase() !== firstLevel?.trim().toLowerCase()) {
-    parts.push(secondLevel.trim());
-  }
+    if (state && state.trim()) {
+      const st = state.trim();
+      if (!parts.some(p => p.toLowerCase().includes(st.toLowerCase()))) {
+        parts.push(st);
+      }
+    }
 
-  if (state && state.trim().toLowerCase() !== firstLevel?.trim().toLowerCase() && state.trim().toLowerCase() !== secondLevel?.trim().toLowerCase()) {
-    parts.push(state.trim());
-  }
+    parts.push('India');
+  } else {
+    const headline = formatLocationHeadline({ name, locality, city });
+    if (city && city.trim() && city.trim().toLowerCase() !== headline.toLowerCase()) {
+      parts.push(city.trim());
+    } else if (state && state.trim() && state.trim().toLowerCase() !== headline.toLowerCase()) {
+      parts.push(state.trim());
+    }
 
-  if (country) {
-    const fullCountry = getCountryName(country.trim());
     if (fullCountry && !parts.some(p => p.toLowerCase() === fullCountry.toLowerCase())) {
       parts.push(fullCountry);
     }
   }
 
-  return parts.length > 0 ? parts.join(', ') : 'Current Location';
+  return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Formats full location string with hierarchical precision
+ */
+export function formatLocationTitle({ name, locality, village, town, district, city, state, country }) {
+  const headline = formatLocationHeadline({ name, locality, village, town, city });
+  const subline = formatLocationSubline({ name, locality, city, district, state, country });
+  if (headline && subline) return `${headline}, ${subline}`;
+  return headline || subline || 'Current Location';
 }
 
 /**

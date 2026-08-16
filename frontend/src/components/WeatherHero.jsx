@@ -5,9 +5,11 @@ import {
   formatDate,
   formatTime,
   formatTimeIST,
-  formatLocationTitle,
+  formatLocationHeadline,
+  formatLocationSubline,
   getTimezoneLabel,
   formatExactWeatherDescription,
+  generateNaturalWeatherDescription,
   calculateRainIntensity,
   calculateSnowIntensity,
   calculatePhotographyHours,
@@ -55,19 +57,20 @@ export default function WeatherHero({ currentWeather }) {
 
   if (!currentWeather) return null;
 
-  const { name, sys, main, weather, dt, timezone, coord, state, rain, snow, elevation } = currentWeather;
+  const { name, sys, main, weather, dt, timezone, coord, state, rain, snow, elevation, district, locality } = currentWeather;
   const condition = weather?.[0] || {};
   
   const resolvedState = state || activeCity?.state || '';
   const resolvedCountry = sys?.country || activeCity?.country || '';
-  const resolvedDistrict = activeCity?.district || activeCity?.county || '';
-  const resolvedLocality = activeCity?.locality || '';
+  const resolvedDistrict = district || activeCity?.district || activeCity?.county || '';
+  const resolvedLocality = locality || activeCity?.locality || '';
   const resolvedCity = activeCity?.city || '';
   const displayName = (name && name !== 'Current Location') ? name : (activeCity?.name || 'Current Location');
 
   const cityObj = {
     name: displayName,
     locality: resolvedLocality,
+    district: resolvedDistrict,
     state: resolvedState,
     country: resolvedCountry,
     lat: coord?.lat,
@@ -75,16 +78,23 @@ export default function WeatherHero({ currentWeather }) {
   };
 
   const isSaved = isCitySaved(cityObj);
-  const locationTitle = formatLocationTitle({
+  const locationHeadline = formatLocationHeadline({
+    name: displayName,
+    locality: resolvedLocality,
+    city: resolvedCity,
+  });
+
+  const locationSubline = formatLocationSubline({
     name: displayName,
     locality: resolvedLocality,
     city: resolvedCity,
     district: resolvedDistrict,
     state: resolvedState,
-    country: resolvedCountry
+    country: resolvedCountry,
   });
 
   const exactDescription = formatExactWeatherDescription(condition);
+  const naturalDescription = generateNaturalWeatherDescription(currentWeather);
   const rainIntensity = calculateRainIntensity(rain, condition.description);
   const snowIntensity = calculateSnowIntensity(snow, condition.description);
   const photoHours = calculatePhotographyHours(sys?.sunrise, sys?.sunset, timezone);
@@ -130,49 +140,54 @@ export default function WeatherHero({ currentWeather }) {
       >
         {/* Main Temperature & Location */}
         <div style={{ flex: '1 1 340px' }}>
-          {/* Header Row: City Name & Save Star Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={24} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-              <h2 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.03em' }}>
-                {locationTitle}
+          {/* 2-Line Location Header: City Name & District/State/Country Subtitle */}
+          <div style={{ marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <MapPin size={26} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', letterSpacing: '-0.03em', lineHeight: 1.15, margin: 0 }}>
+                {locationHeadline}
               </h2>
-            </div>
-            {activeCity?.isCurrentLocation && (
-              <span
+              {activeCity?.isCurrentLocation && (
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: 'var(--color-primary)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Navigation size={12} /> High-Accuracy GPS
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => toggleSaveCity(cityObj)}
+                className="btn-ghost"
                 style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '3px 10px',
+                  padding: '5px 14px',
+                  fontSize: '0.82rem',
                   borderRadius: 'var(--radius-pill)',
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  color: 'var(--color-primary)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
+                  borderColor: isSaved ? 'var(--color-primary)' : 'var(--card-border)',
+                  color: isSaved ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  background: isSaved ? 'var(--badge-bg)' : 'transparent',
                 }}
+                title={isSaved ? 'Remove from saved places' : 'Save city'}
               >
-                <Navigation size={12} /> High-Accuracy GPS
-              </span>
+                <Star size={14} fill={isSaved ? 'var(--color-primary)' : 'none'} />
+                <span>{isSaved ? 'Saved Location' : 'Save Location'}</span>
+              </button>
+            </div>
+            {locationSubline && (
+              <div style={{ fontSize: '1.02rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginTop: '4px', marginLeft: '36px' }}>
+                {locationSubline}
+              </div>
             )}
-            <button
-              type="button"
-              onClick={() => toggleSaveCity(cityObj)}
-              className="btn-ghost"
-              style={{
-                padding: '5px 14px',
-                fontSize: '0.82rem',
-                borderRadius: 'var(--radius-pill)',
-                borderColor: isSaved ? 'var(--color-primary)' : 'var(--card-border)',
-                color: isSaved ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                background: isSaved ? 'var(--badge-bg)' : 'transparent',
-              }}
-              title={isSaved ? 'Remove from saved places' : 'Save city'}
-            >
-              <Star size={14} fill={isSaved ? 'var(--color-primary)' : 'none'} />
-              <span>{isSaved ? 'Saved Location' : 'Save Location'}</span>
-            </button>
           </div>
 
           {/* Coordinates & Elevation Badge */}
@@ -256,14 +271,19 @@ export default function WeatherHero({ currentWeather }) {
                   borderRadius: 'var(--radius-pill)',
                   background: 'var(--badge-bg)',
                   color: 'var(--badge-text)',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  marginBottom: '8px',
+                  fontSize: '1.02rem',
+                  fontWeight: '800',
+                  marginBottom: '6px',
                   border: '1px solid var(--card-border)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 }}
               >
-                {theme?.emoji || '🌤️'} {exactDescription}
+                {theme?.emoji || '🌤️'} {theme?.name || exactDescription}
+              </div>
+
+              {/* Natural Detailed Weather Description */}
+              <div style={{ fontSize: '0.88rem', fontWeight: '600', color: 'rgba(255, 255, 255, 0.92)', marginBottom: '8px', fontStyle: 'italic' }}>
+                «{naturalDescription}»
               </div>
 
               {/* Feels Like & Rain/Snow Intensity */}

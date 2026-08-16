@@ -113,6 +113,23 @@ export function useWeather() {
         resolvedName = primaryMatch.name || resolvedName;
         resolvedState = primaryMatch.state || resolvedState;
         resolvedCountry = primaryMatch.country || resolvedCountry;
+        resolvedDistrict = primaryMatch.district || resolvedDistrict;
+      }
+
+      // Reverse geocode district for India if missing
+      if ((resolvedCountry === 'IN' || resolvedCountry === 'INDIA' || !resolvedCountry) && !resolvedDistrict && targetLat != null && targetLon != null) {
+        try {
+          const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${targetLat}&longitude=${targetLon}&localityLanguage=en`);
+          if (bdcRes.ok) {
+            const bdcData = await bdcRes.json();
+            const foundDist = bdcData.localityInfo?.administrative?.find(a => a.description?.toLowerCase().includes('district') || a.adminLevel === 5)?.name || '';
+            if (foundDist) resolvedDistrict = foundDist;
+            if (bdcData.countryCode) resolvedCountry = bdcData.countryCode.toUpperCase();
+            if (!resolvedState && bdcData.principalSubdivision) resolvedState = bdcData.principalSubdivision;
+          }
+        } catch (e) {
+          console.warn('District reverse geocode lookup failed:', e);
+        }
       }
 
       // Step 2: Fetch Current Weather (via Backend Proxy or Direct Open-Meteo)
@@ -154,11 +171,19 @@ export function useWeather() {
       setCurrentWeather(weatherData);
 
       if (weatherData.weather?.[0]) {
+        const extra = {
+          clouds: weatherData.clouds?.all,
+          rainMm: weatherData.rain?.['1h'] || weatherData.rain?.['3h'] || 0,
+          snowMm: weatherData.snow?.['1h'] || weatherData.snow?.['3h'] || 0,
+          weatherId: weatherData.weather[0].id,
+          description: weatherData.weather[0].description,
+        };
         updateCondition(
           weatherData.weather[0].main,
           weatherData.weather[0].icon,
           weatherData.sys,
-          weatherData.dt
+          weatherData.dt,
+          extra
         );
       }
 
@@ -285,6 +310,7 @@ export function useGeocoding(searchQuery) {
                 lat: item.latitude,
                 lon: item.longitude,
                 state: item.admin1 || '',
+                district: item.admin2 || item.admin3 || '',
                 country: (item.country_code || '').toUpperCase(),
               }));
             }

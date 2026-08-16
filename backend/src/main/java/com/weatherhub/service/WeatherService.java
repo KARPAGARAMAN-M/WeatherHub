@@ -547,6 +547,11 @@ public class WeatherService {
             if (item.containsKey("admin1")) {
                 map.put("state", item.get("admin1"));
             }
+            if (item.containsKey("admin2")) {
+                map.put("district", item.get("admin2"));
+            } else if (item.containsKey("admin3")) {
+                map.put("district", item.get("admin3"));
+            }
             mappedList.add(map);
         }
 

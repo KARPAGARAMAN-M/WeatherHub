@@ -3,7 +3,7 @@ import { Search, MapPin, Loader2, X, ChevronRight, Globe, Navigation } from 'luc
 import { useDebounce } from '../hooks/useDebounce';
 import { useGeocoding } from '../hooks/useWeather';
 import { useWeatherContext } from '../context/WeatherContext';
-import { getCountryName } from '../utils/formatters';
+import { getCountryName, formatLocationSubline } from '../utils/formatters';
 
 export default function SearchBar() {
   const { setActiveCity, detectCurrentLocation } = useWeatherContext();
@@ -229,8 +229,14 @@ export default function SearchBar() {
           {!isSearching &&
             suggestions.map((item, idx) => {
               const isSelected = selectedIndex === idx;
-              const fullCountry = getCountryName(item.country);
-              const subDetails = [item.district, item.state, fullCountry].filter(Boolean).join(', ');
+              const subDetails = formatLocationSubline({
+                name: item.name,
+                locality: item.locality,
+                city: item.city,
+                district: item.district,
+                state: item.state,
+                country: item.country,
+              });
 
               return (
                 <div

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, X, MapPin } from 'lucide-react';
-import { formatTemp, getCountryName } from '../utils/formatters';
+import { formatTemp, getCountryName, formatLocationSubline } from '../utils/formatters';
 import { useWeatherContext } from '../context/WeatherContext';
 import { getThemeForCondition } from '../utils/weatherTheme';
 import AnimatedWeatherIcon from './AnimatedWeatherIcon';
@@ -44,10 +44,15 @@ function SavedCityCard({ cityObj, isSelected }) {
 
   const condMain = data?.weather?.[0]?.main || 'Clear';
   const iconCode = data?.weather?.[0]?.icon || '01d';
-  const cityTheme = getThemeForCondition(condMain, iconCode, data?.sys, data?.dt);
-
   const countryName = getCountryName(cityObj.country || data?.sys?.country || '');
-  const subLocation = [cityObj.state, countryName].filter(Boolean).join(', ');
+  const subLocation = formatLocationSubline({
+    name: cityObj.name,
+    locality: cityObj.locality,
+    city: cityObj.city,
+    district: cityObj.district,
+    state: cityObj.state,
+    country: cityObj.country || data?.sys?.country || '',
+  });
 
   const tempMax = data?.main?.temp_max != null ? data.main.temp_max : (data?.main?.temp != null ? data.main.temp + 2 : null);
   const tempMin = data?.main?.temp_min != null ? data.main.temp_min : (data?.main?.temp != null ? data.main.temp - 2 : null);

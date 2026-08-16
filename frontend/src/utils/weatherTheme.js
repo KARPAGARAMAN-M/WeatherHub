@@ -1,35 +1,40 @@
 /**
- * Dynamic Weather Themes System
- * 11 distinct weather themes: Clear Day, Clear Night, Cloudy, Partly Cloudy, Rain, Thunderstorm, Snow, Mist/Fog, Windy, Sunrise, Sunset
+ * Dynamic Weather Themes & Visual Condition System
+ * Provides 20+ distinct weather visual themes with explicit Day and Night variants:
+ * Clear, Mostly Clear, Partly Cloudy, Mostly Cloudy, Overcast, Light Rain, Moderate Rain,
+ * Heavy Rain, Drizzle, Thunderstorm, Snow, Fog, Mist, Haze, Smoke, Dust, Sand, Squall, Tornado, Sunrise, Sunset.
  */
 
 export const WEATHER_THEMES = {
-  Clear: {
-    key: 'Clear',
-    name: 'Clear Day',
+  // --- Clear Sky ---
+  ClearDay: {
+    key: 'ClearDay',
+    name: 'Clear Sky',
     emoji: '☀️',
-    primary: '#38BDF8',        // Luminous Sky Cyan
-    sky: '#0EA5E9',            // Bright Sky Blue
-    accent: '#F59E0B',         // Warm Sunlight Gold
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0EA5E9',
+    accent: '#F59E0B',
     primaryGlow: 'rgba(56, 189, 248, 0.25)',
     bgGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 35%, #0EA5E9 70%, #38BDF8 100%)',
     cardBg: 'rgba(255, 255, 255, 0.16)',
     cardBorder: 'rgba(255, 255, 255, 0.35)',
     cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
-    ambientColor: 'rgba(56, 189, 248, 0.2)',
-    ambientSecondary: 'rgba(14, 165, 233, 0.15)',
+    ambientColor: 'rgba(56, 189, 248, 0.25)',
+    ambientSecondary: 'rgba(245, 158, 11, 0.2)',
     textColor: '#FFFFFF',
     textSecondary: 'rgba(255, 255, 255, 0.9)',
     badgeBg: 'rgba(56, 189, 248, 0.22)',
     badgeText: '#FFFFFF',
   },
-  Night: {
-    key: 'Night',
-    name: 'Clear Night',
+  ClearNight: {
+    key: 'ClearNight',
+    name: 'Clear Night Sky',
     emoji: '🌙',
-    primary: '#818CF8',        // Moonlit Starlight Violet
-    sky: '#6366F1',            // Moon Glow Indigo
-    accent: '#38BDF8',         // Deep Blue Starlight
+    isNight: true,
+    primary: '#818CF8',
+    sky: '#6366F1',
+    accent: '#38BDF8',
     primaryGlow: 'rgba(129, 140, 248, 0.45)',
     bgGradient: 'linear-gradient(135deg, #030712 0%, #0F172A 35%, #1E1B4B 70%, #311B92 100%)',
     cardBg: 'rgba(30, 41, 59, 0.45)',
@@ -42,32 +47,58 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(129, 140, 248, 0.28)',
     badgeText: '#E0E7FF',
   },
-  Clouds: {
-    key: 'Clouds',
-    name: 'Cloudy',
-    emoji: '☁️',
-    primary: '#CBD5E1',        // Silver Slate
-    sky: '#64748B',            // Slate Blue Gray
-    accent: '#94A3B8',         // Neutral Grey-Blue Accent
-    primaryGlow: 'rgba(203, 213, 225, 0.35)',
-    bgGradient: 'linear-gradient(135deg, #1E293B 0%, #334155 40%, #475569 75%, #64748B 100%)',
-    cardBg: 'rgba(255, 255, 255, 0.14)',
-    cardBorder: 'rgba(203, 213, 225, 0.3)',
-    cardHoverBorder: 'rgba(241, 245, 249, 0.75)',
-    ambientColor: 'rgba(148, 163, 184, 0.28)',
-    ambientSecondary: 'rgba(71, 85, 105, 0.22)',
-    textColor: '#F8FAFC',
-    textSecondary: 'rgba(241, 245, 249, 0.85)',
-    badgeBg: 'rgba(203, 213, 225, 0.22)',
-    badgeText: '#F8FAFC',
+
+  // --- Mostly Clear ---
+  MostlyClearDay: {
+    key: 'MostlyClearDay',
+    name: 'Mostly Clear',
+    emoji: '🌤️',
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0284C7',
+    accent: '#FBBF24',
+    primaryGlow: 'rgba(56, 189, 248, 0.3)',
+    bgGradient: 'linear-gradient(135deg, #0369A1 0%, #0284C7 40%, #38BDF8 75%, #7DD3FC 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.16)',
+    cardBorder: 'rgba(255, 255, 255, 0.35)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
+    ambientColor: 'rgba(56, 189, 248, 0.3)',
+    ambientSecondary: 'rgba(251, 191, 36, 0.2)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.9)',
+    badgeBg: 'rgba(56, 189, 248, 0.25)',
+    badgeText: '#FFFFFF',
   },
-  PartlyCloudy: {
-    key: 'PartlyCloudy',
+  MostlyClearNight: {
+    key: 'MostlyClearNight',
+    name: 'Mostly Clear Night',
+    emoji: '🌌',
+    isNight: true,
+    primary: '#A5B4FC',
+    sky: '#4338CA',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(165, 180, 252, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #050B14 0%, #0F172A 40%, #1E1B4B 75%, #3730A3 100%)',
+    cardBg: 'rgba(30, 41, 59, 0.5)',
+    cardBorder: 'rgba(165, 180, 252, 0.3)',
+    cardHoverBorder: 'rgba(165, 180, 252, 0.75)',
+    ambientColor: 'rgba(165, 180, 252, 0.35)',
+    ambientSecondary: 'rgba(99, 102, 241, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(165, 180, 252, 0.25)',
+    badgeText: '#E0E7FF',
+  },
+
+  // --- Partly Cloudy ---
+  PartlyCloudyDay: {
+    key: 'PartlyCloudyDay',
     name: 'Partly Cloudy',
     emoji: '🌤️',
-    primary: '#38BDF8',        // Luminous Sky Cyan
-    sky: '#60A5FA',            // Soft Sky Blue
-    accent: '#F59E0B',         // Sunbeam Amber Accent
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#60A5FA',
+    accent: '#F59E0B',
     primaryGlow: 'rgba(56, 189, 248, 0.45)',
     bgGradient: 'linear-gradient(135deg, #0C4A6E 0%, #0284C7 40%, #38BDF8 75%, #93C5FD 100%)',
     cardBg: 'rgba(255, 255, 255, 0.15)',
@@ -80,16 +111,185 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(56, 189, 248, 0.28)',
     badgeText: '#F0F9FF',
   },
-  Rain: {
-    key: 'Rain',
-    name: 'Rain',
+  PartlyCloudyNight: {
+    key: 'PartlyCloudyNight',
+    name: 'Partly Cloudy Night',
+    emoji: '☁️',
+    isNight: true,
+    primary: '#818CF8',
+    sky: '#475569',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(129, 140, 248, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #0B132B 0%, #1C2541 40%, #3B4B68 75%, #4B5563 100%)',
+    cardBg: 'rgba(30, 41, 59, 0.55)',
+    cardBorder: 'rgba(129, 140, 248, 0.35)',
+    cardHoverBorder: 'rgba(129, 140, 248, 0.8)',
+    ambientColor: 'rgba(129, 140, 248, 0.35)',
+    ambientSecondary: 'rgba(71, 85, 105, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(129, 140, 248, 0.28)',
+    badgeText: '#E0E7FF',
+  },
+
+  // --- Mostly Cloudy ---
+  MostlyCloudyDay: {
+    key: 'MostlyCloudyDay',
+    name: 'Mostly Cloudy',
+    emoji: '🌥️',
+    isNight: false,
+    primary: '#CBD5E1',
+    sky: '#64748B',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(203, 213, 225, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #1E293B 0%, #334155 40%, #475569 75%, #64748B 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    cardBorder: 'rgba(203, 213, 225, 0.3)',
+    cardHoverBorder: 'rgba(241, 245, 249, 0.75)',
+    ambientColor: 'rgba(148, 163, 184, 0.28)',
+    ambientSecondary: 'rgba(71, 85, 105, 0.22)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(241, 245, 249, 0.85)',
+    badgeBg: 'rgba(203, 213, 225, 0.22)',
+    badgeText: '#F8FAFC',
+  },
+  MostlyCloudyNight: {
+    key: 'MostlyCloudyNight',
+    name: 'Mostly Cloudy Night',
+    emoji: '☁️',
+    isNight: true,
+    primary: '#94A3B8',
+    sky: '#334155',
+    accent: '#818CF8',
+    primaryGlow: 'rgba(148, 163, 184, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #070D18 0%, #0F172A 40%, #1E293B 75%, #334155 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.6)',
+    cardBorder: 'rgba(148, 163, 184, 0.3)',
+    cardHoverBorder: 'rgba(203, 213, 225, 0.75)',
+    ambientColor: 'rgba(148, 163, 184, 0.3)',
+    ambientSecondary: 'rgba(51, 65, 85, 0.3)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(226, 232, 240, 0.85)',
+    badgeBg: 'rgba(148, 163, 184, 0.25)',
+    badgeText: '#F8FAFC',
+  },
+
+  // --- Overcast ---
+  OvercastDay: {
+    key: 'OvercastDay',
+    name: 'Overcast',
+    emoji: '☁️',
+    isNight: false,
+    primary: '#94A3B8',
+    sky: '#475569',
+    accent: '#64748B',
+    primaryGlow: 'rgba(148, 163, 184, 0.3)',
+    bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #334155 75%, #475569 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.12)',
+    cardBorder: 'rgba(148, 163, 184, 0.3)',
+    cardHoverBorder: 'rgba(203, 213, 225, 0.7)',
+    ambientColor: 'rgba(148, 163, 184, 0.25)',
+    ambientSecondary: 'rgba(71, 85, 105, 0.25)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(226, 232, 240, 0.85)',
+    badgeBg: 'rgba(148, 163, 184, 0.22)',
+    badgeText: '#F8FAFC',
+  },
+  OvercastNight: {
+    key: 'OvercastNight',
+    name: 'Overcast Night',
+    emoji: '☁️',
+    isNight: true,
+    primary: '#64748B',
+    sky: '#1E293B',
+    accent: '#94A3B8',
+    primaryGlow: 'rgba(100, 116, 139, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #020617 0%, #0F172A 40%, #1E293B 80%, #334155 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.65)',
+    cardBorder: 'rgba(100, 116, 139, 0.35)',
+    cardHoverBorder: 'rgba(148, 163, 184, 0.75)',
+    ambientColor: 'rgba(100, 116, 139, 0.3)',
+    ambientSecondary: 'rgba(30, 41, 59, 0.35)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(203, 213, 225, 0.85)',
+    badgeBg: 'rgba(100, 116, 139, 0.25)',
+    badgeText: '#F8FAFC',
+  },
+
+  // --- Light Rain ---
+  LightRainDay: {
+    key: 'LightRainDay',
+    name: 'Light Rain',
+    emoji: '🌦️',
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0284C7',
+    accent: '#60A5FA',
+    primaryGlow: 'rgba(56, 189, 248, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #0C4A6E 0%, #0284C7 40%, #0369A1 75%, #38BDF8 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.15)',
+    cardBorder: 'rgba(56, 189, 248, 0.35)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
+    ambientColor: 'rgba(56, 189, 248, 0.35)',
+    ambientSecondary: 'rgba(2, 132, 199, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(56, 189, 248, 0.28)',
+    badgeText: '#E0F2FE',
+  },
+  LightRainNight: {
+    key: 'LightRainNight',
+    name: 'Light Rain Night',
     emoji: '🌧️',
-    primary: '#38BDF8',        // Raindrop Cyan
-    sky: '#0284C7',            // Deep Rain Slate Blue
-    accent: '#60A5FA',         // Cool Blue Highlight
+    isNight: true,
+    primary: '#38BDF8',
+    sky: '#1E293B',
+    accent: '#818CF8',
     primaryGlow: 'rgba(56, 189, 248, 0.45)',
-    bgGradient: 'linear-gradient(135deg, #070F26 0%, #0F172A 40%, #1E293B 70%, #0284C7 100%)',
-    cardBg: 'rgba(15, 23, 42, 0.55)',
+    bgGradient: 'linear-gradient(135deg, #030712 0%, #0F172A 40%, #0C4A6E 75%, #0284C7 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.6)',
+    cardBorder: 'rgba(56, 189, 248, 0.35)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
+    ambientColor: 'rgba(56, 189, 248, 0.38)',
+    ambientSecondary: 'rgba(129, 140, 248, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(56, 189, 248, 0.28)',
+    badgeText: '#E0F2FE',
+  },
+
+  // --- Moderate Rain ---
+  ModerateRainDay: {
+    key: 'ModerateRainDay',
+    name: 'Moderate Rain',
+    emoji: '🌧️',
+    isNight: false,
+    primary: '#0EA5E9',
+    sky: '#0369A1',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(14, 165, 233, 0.45)',
+    bgGradient: 'linear-gradient(135deg, #071E3D 0%, #0C4A6E 40%, #0284C7 75%, #0EA5E9 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    cardBorder: 'rgba(14, 165, 233, 0.35)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.85)',
+    ambientColor: 'rgba(14, 165, 233, 0.4)',
+    ambientSecondary: 'rgba(3, 105, 161, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(14, 165, 233, 0.28)',
+    badgeText: '#E0F2FE',
+  },
+  ModerateRainNight: {
+    key: 'ModerateRainNight',
+    name: 'Moderate Rain Night',
+    emoji: '🌧️',
+    isNight: true,
+    primary: '#38BDF8',
+    sky: '#070F26',
+    accent: '#60A5FA',
+    primaryGlow: 'rgba(56, 189, 248, 0.45)',
+    bgGradient: 'linear-gradient(135deg, #020617 0%, #070F26 40%, #0F172A 70%, #0369A1 100%)',
+    cardBg: 'rgba(7, 15, 38, 0.65)',
     cardBorder: 'rgba(56, 189, 248, 0.35)',
     cardHoverBorder: 'rgba(56, 189, 248, 0.8)',
     ambientColor: 'rgba(56, 189, 248, 0.38)',
@@ -99,13 +299,100 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(56, 189, 248, 0.28)',
     badgeText: '#E0F2FE',
   },
-  Thunderstorm: {
-    key: 'Thunderstorm',
+
+  // --- Heavy Rain ---
+  HeavyRainDay: {
+    key: 'HeavyRainDay',
+    name: 'Heavy Rain',
+    emoji: '🌧️',
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0284C7',
+    accent: '#60A5FA',
+    primaryGlow: 'rgba(56, 189, 248, 0.5)',
+    bgGradient: 'linear-gradient(135deg, #051329 0%, #09254A 40%, #0C4A6E 75%, #0284C7 100%)',
+    cardBg: 'rgba(9, 37, 74, 0.6)',
+    cardBorder: 'rgba(56, 189, 248, 0.4)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.9)',
+    ambientColor: 'rgba(56, 189, 248, 0.45)',
+    ambientSecondary: 'rgba(2, 132, 199, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.9)',
+    badgeBg: 'rgba(56, 189, 248, 0.3)',
+    badgeText: '#E0F2FE',
+  },
+  HeavyRainNight: {
+    key: 'HeavyRainNight',
+    name: 'Heavy Rain Night',
+    emoji: '⛈️',
+    isNight: true,
+    primary: '#38BDF8',
+    sky: '#030712',
+    accent: '#60A5FA',
+    primaryGlow: 'rgba(56, 189, 248, 0.55)',
+    bgGradient: 'linear-gradient(135deg, #02040A 0%, #070F26 40%, #0F172A 70%, #0C4A6E 100%)',
+    cardBg: 'rgba(7, 15, 38, 0.7)',
+    cardBorder: 'rgba(56, 189, 248, 0.4)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.9)',
+    ambientColor: 'rgba(56, 189, 248, 0.45)',
+    ambientSecondary: 'rgba(129, 140, 248, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.9)',
+    badgeBg: 'rgba(56, 189, 248, 0.3)',
+    badgeText: '#E0F2FE',
+  },
+
+  // --- Drizzle ---
+  DrizzleDay: {
+    key: 'DrizzleDay',
+    name: 'Drizzle',
+    emoji: '🌦️',
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0EA5E9',
+    accent: '#93C5FD',
+    primaryGlow: 'rgba(56, 189, 248, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #0C4A6E 0%, #0284C7 40%, #38BDF8 75%, #7DD3FC 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.15)',
+    cardBorder: 'rgba(56, 189, 248, 0.32)',
+    cardHoverBorder: 'rgba(56, 189, 248, 0.75)',
+    ambientColor: 'rgba(56, 189, 248, 0.35)',
+    ambientSecondary: 'rgba(14, 165, 233, 0.22)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.9)',
+    badgeBg: 'rgba(56, 189, 248, 0.25)',
+    badgeText: '#F0F9FF',
+  },
+  DrizzleNight: {
+    key: 'DrizzleNight',
+    name: 'Drizzle Night',
+    emoji: '🌧️',
+    isNight: true,
+    primary: '#7DD3FC',
+    sky: '#0F172A',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(125, 211, 252, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #030712 0%, #0F172A 40%, #1E293B 75%, #0C4A6E 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.6)',
+    cardBorder: 'rgba(125, 211, 252, 0.35)',
+    cardHoverBorder: 'rgba(125, 211, 252, 0.8)',
+    ambientColor: 'rgba(125, 211, 252, 0.35)',
+    ambientSecondary: 'rgba(56, 189, 248, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.88)',
+    badgeBg: 'rgba(125, 211, 252, 0.28)',
+    badgeText: '#E0F2FE',
+  },
+
+  // --- Thunderstorm ---
+  ThunderstormDay: {
+    key: 'ThunderstormDay',
     name: 'Thunderstorm',
     emoji: '⛈️',
-    primary: '#C084FC',        // Electric Violet Bolt
-    sky: '#A855F7',            // Dark Charcoal Purple Glow
-    accent: '#22D3EE',         // Electric Cyan Spark
+    isNight: false,
+    primary: '#C084FC',
+    sky: '#A855F7',
+    accent: '#22D3EE',
     primaryGlow: 'rgba(192, 132, 252, 0.55)',
     bgGradient: 'linear-gradient(135deg, #0B0914 0%, #180E29 40%, #2E1065 75%, #4C1D95 100%)',
     cardBg: 'rgba(24, 9, 38, 0.65)',
@@ -118,13 +405,36 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(192, 132, 252, 0.3)',
     badgeText: '#F3E8FF',
   },
-  Snow: {
-    key: 'Snow',
-    name: 'Snow',
+  ThunderstormNight: {
+    key: 'ThunderstormNight',
+    name: 'Thunderstorm Night',
+    emoji: '⛈️',
+    isNight: true,
+    primary: '#E9D5FF',
+    sky: '#1E1B4B',
+    accent: '#F472B6',
+    primaryGlow: 'rgba(233, 213, 255, 0.6)',
+    bgGradient: 'linear-gradient(135deg, #030208 0%, #0F081C 40%, #1E0A3C 75%, #3B0764 100%)',
+    cardBg: 'rgba(15, 8, 28, 0.7)',
+    cardBorder: 'rgba(233, 213, 255, 0.4)',
+    cardHoverBorder: 'rgba(233, 213, 255, 0.9)',
+    ambientColor: 'rgba(233, 213, 255, 0.5)',
+    ambientSecondary: 'rgba(192, 132, 252, 0.35)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.92)',
+    badgeBg: 'rgba(233, 213, 255, 0.3)',
+    badgeText: '#F3E8FF',
+  },
+
+  // --- Snow ---
+  SnowDay: {
+    key: 'SnowDay',
+    name: 'Snowfall',
     emoji: '❄️',
-    primary: '#7DD3FC',        // Glacier Icy Blue
-    sky: '#BAE6FD',            // Silver Frost White-Blue
-    accent: '#F0F9FF',         // Crisp Snow Sparkle
+    isNight: false,
+    primary: '#7DD3FC',
+    sky: '#BAE6FD',
+    accent: '#F0F9FF',
     primaryGlow: 'rgba(186, 230, 253, 0.55)',
     bgGradient: 'linear-gradient(135deg, #092642 0%, #1E3A8A 35%, #0284C7 70%, #BAE6FD 100%)',
     cardBg: 'rgba(255, 255, 255, 0.2)',
@@ -137,13 +447,36 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(224, 242, 254, 0.35)',
     badgeText: '#F0F9FF',
   },
-  Mist: {
-    key: 'Mist',
-    name: 'Mist / Fog',
+  SnowNight: {
+    key: 'SnowNight',
+    name: 'Snowfall Night',
+    emoji: '❄️',
+    isNight: true,
+    primary: '#E0F2FE',
+    sky: '#1E293B',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(224, 242, 254, 0.5)',
+    bgGradient: 'linear-gradient(135deg, #030712 0%, #0B192C 40%, #1E3A8A 75%, #0284C7 100%)',
+    cardBg: 'rgba(11, 25, 44, 0.65)',
+    cardBorder: 'rgba(224, 242, 254, 0.4)',
+    cardHoverBorder: 'rgba(224, 242, 254, 0.85)',
+    ambientColor: 'rgba(224, 242, 254, 0.4)',
+    ambientSecondary: 'rgba(125, 211, 252, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(241, 245, 249, 0.9)',
+    badgeBg: 'rgba(224, 242, 254, 0.3)',
+    badgeText: '#F0F9FF',
+  },
+
+  // --- Fog ---
+  FogDay: {
+    key: 'FogDay',
+    name: 'Fog',
     emoji: '🌫️',
-    primary: '#CBD5E1',        // Soft Silver Grey
-    sky: '#94A3B8',            // Soft Misty Slate
-    accent: '#A1A1AA',         // Muted Slate Haze
+    isNight: false,
+    primary: '#CBD5E1',
+    sky: '#94A3B8',
+    accent: '#A1A1AA',
     primaryGlow: 'rgba(203, 213, 225, 0.4)',
     bgGradient: 'linear-gradient(135deg, #18181B 0%, #27272A 40%, #52525B 75%, #9CA3AF 100%)',
     cardBg: 'rgba(255, 255, 255, 0.13)',
@@ -156,14 +489,181 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(203, 213, 225, 0.25)',
     badgeText: '#F1F5F9',
   },
-  Windy: {
-    key: 'Windy',
-    name: 'Windy',
-    emoji: '🌪️',
-    primary: '#38BDF8',        // Breeze Sky Blue
-    sky: '#7DD3FC',            // White-Blue Breeze
-    accent: '#E0F2FE',         // Flowing Breeze Highlight
-    primaryGlow: 'rgba(56, 189, 248, 0.45)',
+  FogNight: {
+    key: 'FogNight',
+    name: 'Foggy Night',
+    emoji: '🌫️',
+    isNight: true,
+    primary: '#94A3B8',
+    sky: '#18181B',
+    accent: '#71717A',
+    primaryGlow: 'rgba(148, 163, 184, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #09090B 0%, #18181B 40%, #27272A 75%, #3F3F46 100%)',
+    cardBg: 'rgba(24, 24, 27, 0.65)',
+    cardBorder: 'rgba(113, 113, 122, 0.35)',
+    cardHoverBorder: 'rgba(148, 163, 184, 0.7)',
+    ambientColor: 'rgba(148, 163, 184, 0.25)',
+    ambientSecondary: 'rgba(39, 39, 42, 0.3)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(212, 212, 216, 0.85)',
+    badgeBg: 'rgba(148, 163, 184, 0.25)',
+    badgeText: '#F1F5F9',
+  },
+
+  // --- Mist ---
+  MistDay: {
+    key: 'MistDay',
+    name: 'Mist',
+    emoji: '🌫️',
+    isNight: false,
+    primary: '#CBD5E1',
+    sky: '#64748B',
+    accent: '#38BDF8',
+    primaryGlow: 'rgba(203, 213, 225, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #475569 75%, #94A3B8 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    cardBorder: 'rgba(203, 213, 225, 0.32)',
+    cardHoverBorder: 'rgba(241, 245, 249, 0.75)',
+    ambientColor: 'rgba(203, 213, 225, 0.3)',
+    ambientSecondary: 'rgba(56, 189, 248, 0.2)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(226, 232, 240, 0.85)',
+    badgeBg: 'rgba(203, 213, 225, 0.25)',
+    badgeText: '#F1F5F9',
+  },
+  MistNight: {
+    key: 'MistNight',
+    name: 'Misty Night',
+    emoji: '🌫️',
+    isNight: true,
+    primary: '#94A3B8',
+    sky: '#0F172A',
+    accent: '#818CF8',
+    primaryGlow: 'rgba(148, 163, 184, 0.35)',
+    bgGradient: 'linear-gradient(135deg, #020617 0%, #0F172A 40%, #1E293B 75%, #475569 100%)',
+    cardBg: 'rgba(15, 23, 42, 0.65)',
+    cardBorder: 'rgba(148, 163, 184, 0.35)',
+    cardHoverBorder: 'rgba(203, 213, 225, 0.75)',
+    ambientColor: 'rgba(148, 163, 184, 0.28)',
+    ambientSecondary: 'rgba(129, 140, 248, 0.2)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(203, 213, 225, 0.85)',
+    badgeBg: 'rgba(148, 163, 184, 0.25)',
+    badgeText: '#F1F5F9',
+  },
+
+  // --- Haze ---
+  HazeDay: {
+    key: 'HazeDay',
+    name: 'Haze',
+    emoji: '🌁',
+    isNight: false,
+    primary: '#F59E0B',
+    sky: '#78350F',
+    accent: '#FBBF24',
+    primaryGlow: 'rgba(245, 158, 11, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #2A1A08 0%, #451A03 40%, #78350F 75%, #D97706 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.15)',
+    cardBorder: 'rgba(245, 158, 11, 0.35)',
+    cardHoverBorder: 'rgba(251, 191, 36, 0.8)',
+    ambientColor: 'rgba(245, 158, 11, 0.4)',
+    ambientSecondary: 'rgba(217, 119, 6, 0.25)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(254, 243, 199, 0.88)',
+    badgeBg: 'rgba(245, 158, 11, 0.28)',
+    badgeText: '#FEF3C7',
+  },
+  HazeNight: {
+    key: 'HazeNight',
+    name: 'Hazy Night',
+    emoji: '🌁',
+    isNight: true,
+    primary: '#D97706',
+    sky: '#1C1917',
+    accent: '#F59E0B',
+    primaryGlow: 'rgba(217, 119, 6, 0.45)',
+    bgGradient: 'linear-gradient(135deg, #0C0A09 0%, #1C1917 40%, #292524 75%, #451A03 100%)',
+    cardBg: 'rgba(28, 25, 23, 0.65)',
+    cardBorder: 'rgba(217, 119, 6, 0.35)',
+    cardHoverBorder: 'rgba(245, 158, 11, 0.8)',
+    ambientColor: 'rgba(217, 119, 6, 0.35)',
+    ambientSecondary: 'rgba(120, 53, 15, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(254, 243, 199, 0.85)',
+    badgeBg: 'rgba(217, 119, 6, 0.28)',
+    badgeText: '#FEF3C7',
+  },
+
+  // --- Smoke / Dust / Sand / Squall / Tornado ---
+  Smoke: {
+    key: 'Smoke',
+    name: 'Smoke',
+    emoji: '💨',
+    isNight: false,
+    primary: '#A1A1AA',
+    sky: '#3F3F46',
+    accent: '#F59E0B',
+    primaryGlow: 'rgba(161, 161, 170, 0.4)',
+    bgGradient: 'linear-gradient(135deg, #09090B 0%, #18181B 40%, #27272A 75%, #52525B 100%)',
+    cardBg: 'rgba(255, 255, 255, 0.12)',
+    cardBorder: 'rgba(161, 161, 170, 0.35)',
+    cardHoverBorder: 'rgba(212, 212, 216, 0.75)',
+    ambientColor: 'rgba(161, 161, 170, 0.3)',
+    ambientSecondary: 'rgba(82, 82, 91, 0.25)',
+    textColor: '#F8FAFC',
+    textSecondary: 'rgba(226, 232, 240, 0.85)',
+    badgeBg: 'rgba(161, 161, 170, 0.25)',
+    badgeText: '#F1F5F9',
+  },
+  Dust: {
+    key: 'Dust',
+    name: 'Dust',
+    emoji: '🧹',
+    isNight: false,
+    primary: '#D97706',
+    sky: '#78350F',
+    accent: '#FBBF24',
+    primaryGlow: 'rgba(217, 119, 6, 0.45)',
+    bgGradient: 'linear-gradient(135deg, #1C1917 0%, #292524 40%, #451A03 75%, #78350F 100%)',
+    cardBg: 'rgba(41, 37, 36, 0.65)',
+    cardBorder: 'rgba(217, 119, 6, 0.35)',
+    cardHoverBorder: 'rgba(251, 191, 36, 0.8)',
+    ambientColor: 'rgba(217, 119, 6, 0.4)',
+    ambientSecondary: 'rgba(120, 53, 15, 0.3)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(254, 243, 199, 0.88)',
+    badgeBg: 'rgba(217, 119, 6, 0.3)',
+    badgeText: '#FEF3C7',
+  },
+  Sand: {
+    key: 'Sand',
+    name: 'Sandstorm',
+    emoji: '🏜️',
+    isNight: false,
+    primary: '#F59E0B',
+    sky: '#B45309',
+    accent: '#FDE047',
+    primaryGlow: 'rgba(245, 158, 11, 0.5)',
+    bgGradient: 'linear-gradient(135deg, #451A03 0%, #78350F 40%, #9A3412 75%, #D97706 100%)',
+    cardBg: 'rgba(120, 53, 15, 0.55)',
+    cardBorder: 'rgba(245, 158, 11, 0.4)',
+    cardHoverBorder: 'rgba(253, 224, 71, 0.85)',
+    ambientColor: 'rgba(245, 158, 11, 0.45)',
+    ambientSecondary: 'rgba(180, 83, 9, 0.35)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(254, 243, 199, 0.9)',
+    badgeBg: 'rgba(245, 158, 11, 0.3)',
+    badgeText: '#FEF3C7',
+  },
+  Squall: {
+    key: 'Squall',
+    name: 'Squall',
+    emoji: '💨',
+    isNight: false,
+    primary: '#38BDF8',
+    sky: '#0284C7',
+    accent: '#E0F2FE',
+    primaryGlow: 'rgba(56, 189, 248, 0.5)',
     bgGradient: 'linear-gradient(135deg, #0369A1 0%, #0284C7 35%, #38BDF8 70%, #E0F2FE 100%)',
     cardBg: 'rgba(255, 255, 255, 0.16)',
     cardBorder: 'rgba(224, 242, 254, 0.35)',
@@ -175,13 +675,36 @@ export const WEATHER_THEMES = {
     badgeBg: 'rgba(56, 189, 248, 0.28)',
     badgeText: '#F0F9FF',
   },
+  Tornado: {
+    key: 'Tornado',
+    name: 'Tornado',
+    emoji: '🌪️',
+    isNight: false,
+    primary: '#EF4444',
+    sky: '#991B1B',
+    accent: '#F87171',
+    primaryGlow: 'rgba(239, 68, 68, 0.6)',
+    bgGradient: 'linear-gradient(135deg, #180202 0%, #450A0A 40%, #7F1D1D 75%, #991B1B 100%)',
+    cardBg: 'rgba(69, 10, 10, 0.65)',
+    cardBorder: 'rgba(239, 68, 68, 0.45)',
+    cardHoverBorder: 'rgba(248, 113, 113, 0.9)',
+    ambientColor: 'rgba(239, 68, 68, 0.5)',
+    ambientSecondary: 'rgba(153, 27, 27, 0.4)',
+    textColor: '#FFFFFF',
+    textSecondary: 'rgba(254, 226, 226, 0.92)',
+    badgeBg: 'rgba(239, 68, 68, 0.32)',
+    badgeText: '#FEE2E2',
+  },
+
+  // --- Sunrise & Sunset ---
   Sunrise: {
     key: 'Sunrise',
     name: 'Sunrise',
     emoji: '🌅',
-    primary: '#FB923C',        // Soft Peach Orange
-    sky: '#F43F5E',            // Pink Sun Glow
-    accent: '#FDE047',         // Warm Sunlight Yellow
+    isNight: false,
+    primary: '#FB923C',
+    sky: '#F43F5E',
+    accent: '#FDE047',
     primaryGlow: 'rgba(251, 146, 60, 0.5)',
     bgGradient: 'linear-gradient(135deg, #4C0519 0%, #9F1239 35%, #EA580C 70%, #FDBA74 100%)',
     cardBg: 'rgba(255, 255, 255, 0.16)',
@@ -198,9 +721,10 @@ export const WEATHER_THEMES = {
     key: 'Sunset',
     name: 'Sunset',
     emoji: '🌇',
-    primary: '#F97316',        // Deep Sunset Orange
-    sky: '#C026D3',            // Soft Magenta Purple
-    accent: '#E11D48',         // Crimson Red Lighting
+    isNight: false,
+    primary: '#F97316',
+    sky: '#C026D3',
+    accent: '#E11D48',
     primaryGlow: 'rgba(249, 115, 22, 0.5)',
     bgGradient: 'linear-gradient(135deg, #2E1065 0%, #701A75 35%, #C026D3 65%, #F97316 100%)',
     cardBg: 'rgba(255, 255, 255, 0.16)',
@@ -215,24 +739,32 @@ export const WEATHER_THEMES = {
   },
 };
 
-const ATMOSPHERE_TYPES = ['Mist', 'Smoke', 'Haze', 'Dust', 'Fog', 'Sand', 'Ash', 'Squall', 'Tornado'];
+// Backward Compatibility Aliases
+WEATHER_THEMES.Clear = WEATHER_THEMES.ClearDay;
+WEATHER_THEMES.Night = WEATHER_THEMES.ClearNight;
+WEATHER_THEMES.Clouds = WEATHER_THEMES.MostlyCloudyDay;
+WEATHER_THEMES.PartlyCloudy = WEATHER_THEMES.PartlyCloudyDay;
+WEATHER_THEMES.Rain = WEATHER_THEMES.ModerateRainDay;
+WEATHER_THEMES.Thunderstorm = WEATHER_THEMES.ThunderstormDay;
+WEATHER_THEMES.Snow = WEATHER_THEMES.SnowDay;
+WEATHER_THEMES.Mist = WEATHER_THEMES.MistDay;
+WEATHER_THEMES.Windy = WEATHER_THEMES.Squall;
 
 /**
- * Determine weather theme key based on condition string, OpenWeather icon code, and optional sys sunrise/sunset
+ * Centralized Weather Condition & Visual Evaluation Engine
+ * Logic: API Weather Code + Cloud Coverage % + Precipitation + Time of Day -> Theme Object
  */
-export function getThemeForCondition(conditionMain, iconCode = '', sys = null, dt = null) {
+export function getThemeForCondition(conditionMain = '', iconCode = '', sys = null, dt = null, extraMetrics = {}) {
+  const nowSec = dt || Math.floor(Date.now() / 1000);
   let isNight = false;
   let isSunriseSunset = false;
-
-  const nowSec = dt || Math.floor(Date.now() / 1000);
-
   let isNearSunrise = false;
   let isNearSunset = false;
 
   if (sys && sys.sunrise && sys.sunset) {
     const sr = sys.sunrise;
     const ss = sys.sunset;
-    const margin = 2700; // 45 minutes in seconds
+    const margin = 2700; // 45 minutes
 
     if (Math.abs(nowSec - sr) <= margin) {
       isSunriseSunset = true;
@@ -252,65 +784,95 @@ export function getThemeForCondition(conditionMain, iconCode = '', sys = null, d
   }
 
   const condLower = (conditionMain || '').toLowerCase();
-  const iconLower = (iconCode || '').toLowerCase();
+  const descLower = (extraMetrics.description || '').toLowerCase();
+  const weatherId = extraMetrics.weatherId || extraMetrics.id || 0;
+  const cloudPct = extraMetrics.clouds != null ? extraMetrics.clouds : null;
+  const rainMm = extraMetrics.rainMm || 0;
 
-  // If explicit Sunrise/Sunset condition or near sunrise/sunset and clear or partly cloudy
+  // 1. Sunrise / Sunset
   if (condLower.includes('sunrise') || (isSunriseSunset && isNearSunrise)) {
     return WEATHER_THEMES.Sunrise;
   }
-
   if (condLower.includes('sunset') || (isSunriseSunset && isNearSunset)) {
     return WEATHER_THEMES.Sunset;
   }
 
-  if (isSunriseSunset && (condLower === 'clear' || condLower === 'clouds' || iconLower.startsWith('01') || iconLower.startsWith('02'))) {
-    return WEATHER_THEMES.Sunset;
+  // 2. Severe Atmospheric Hazards
+  if (weatherId === 781 || condLower.includes('tornado') || descLower.includes('tornado')) {
+    return WEATHER_THEMES.Tornado;
+  }
+  if (weatherId === 771 || condLower.includes('squall') || descLower.includes('squall')) {
+    return WEATHER_THEMES.Squall;
+  }
+  if (weatherId === 751 || condLower.includes('sand') || descLower.includes('sand')) {
+    return WEATHER_THEMES.Sand;
+  }
+  if (weatherId === 761 || weatherId === 731 || condLower.includes('dust') || descLower.includes('dust')) {
+    return WEATHER_THEMES.Dust;
+  }
+  if (weatherId === 711 || condLower.includes('smoke') || descLower.includes('smoke')) {
+    return WEATHER_THEMES.Smoke;
+  }
+  if (weatherId === 721 || condLower.includes('haze') || descLower.includes('haze')) {
+    return isNight ? WEATHER_THEMES.HazeNight : WEATHER_THEMES.HazeDay;
+  }
+  if (weatherId === 741 || condLower.includes('fog') || descLower.includes('fog')) {
+    return isNight ? WEATHER_THEMES.FogNight : WEATHER_THEMES.FogDay;
+  }
+  if (weatherId === 701 || condLower.includes('mist') || descLower.includes('mist')) {
+    return isNight ? WEATHER_THEMES.MistNight : WEATHER_THEMES.MistDay;
   }
 
-  // Windy / Breeze / Squall / Tornado
-  if (condLower.includes('wind') || condLower.includes('breeze') || condLower.includes('gale') || condLower.includes('squall') || condLower.includes('tornado')) {
-    return WEATHER_THEMES.Windy;
+  // 3. Thunderstorm
+  if ((weatherId >= 200 && weatherId <= 232) || condLower.includes('thunder') || descLower.includes('thunder')) {
+    return isNight ? WEATHER_THEMES.ThunderstormNight : WEATHER_THEMES.ThunderstormDay;
   }
 
-  // If night and clear/partly cloudy, trigger Night theme
-  if (isNight && (condLower === 'clear' || condLower === 'clouds' || iconLower === '01n' || iconLower === '02n')) {
-    return WEATHER_THEMES.Night;
+  // 4. Snow
+  if ((weatherId >= 600 && weatherId <= 622) || condLower.includes('snow') || descLower.includes('snow')) {
+    return isNight ? WEATHER_THEMES.SnowNight : WEATHER_THEMES.SnowDay;
   }
 
-  // Thunderstorm
-  if (condLower.includes('thunder') || iconLower.startsWith('11')) {
-    return WEATHER_THEMES.Thunderstorm;
+  // 5. Drizzle
+  if ((weatherId >= 300 && weatherId <= 321) || condLower.includes('drizzle') || descLower.includes('drizzle')) {
+    return isNight ? WEATHER_THEMES.DrizzleNight : WEATHER_THEMES.DrizzleDay;
   }
 
-  // Snow
-  if (condLower.includes('snow') || iconLower.startsWith('13')) {
-    return WEATHER_THEMES.Snow;
-  }
-
-  // Rain or Drizzle
-  if (condLower.includes('rain') || condLower.includes('drizzle') || iconLower.startsWith('09') || iconLower.startsWith('10')) {
-    return WEATHER_THEMES.Rain;
-  }
-
-  // Mist / Fog / Atmosphere
-  if (ATMOSPHERE_TYPES.some(t => t.toLowerCase() === condLower) || iconLower.startsWith('50')) {
-    return WEATHER_THEMES.Mist;
-  }
-
-  // Clouds vs Partly Cloudy
-  if (condLower.includes('cloud') || iconLower.startsWith('02') || iconLower.startsWith('03') || iconLower.startsWith('04')) {
-    if (iconLower === '02d' || iconLower === '03d' || condLower.includes('few') || condLower.includes('scattered')) {
-      return WEATHER_THEMES.PartlyCloudy;
+  // 6. Rain
+  if ((weatherId >= 500 && weatherId <= 531) || condLower.includes('rain') || descLower.includes('rain')) {
+    if (weatherId === 502 || weatherId === 503 || weatherId === 504 || weatherId === 522 || rainMm >= 7.5 || descLower.includes('heavy')) {
+      return isNight ? WEATHER_THEMES.HeavyRainNight : WEATHER_THEMES.HeavyRainDay;
     }
-    return WEATHER_THEMES.Clouds;
+    if (weatherId === 501 || weatherId === 521 || rainMm >= 2.5 || descLower.includes('moderate')) {
+      return isNight ? WEATHER_THEMES.ModerateRainNight : WEATHER_THEMES.ModerateRainDay;
+    }
+    return isNight ? WEATHER_THEMES.LightRainNight : WEATHER_THEMES.LightRainDay;
   }
 
-  // Clear / Sunny
-  if (condLower === 'clear' || iconLower === '01d') {
-    return isNight ? WEATHER_THEMES.Night : WEATHER_THEMES.Clear;
+  // 7. Cloud Coverage & Clear Sky Evaluation
+  let finalCloud = cloudPct;
+  if (finalCloud == null) {
+    if (weatherId === 800 || condLower === 'clear') finalCloud = 5;
+    else if (weatherId === 801 || descLower.includes('few')) finalCloud = 20;
+    else if (weatherId === 802 || descLower.includes('scattered') || descLower.includes('partly')) finalCloud = 45;
+    else if (weatherId === 803 || descLower.includes('broken') || descLower.includes('mostly')) finalCloud = 75;
+    else if (weatherId === 804 || descLower.includes('overcast')) finalCloud = 95;
+    else finalCloud = 20;
   }
 
-  return isNight ? WEATHER_THEMES.Night : WEATHER_THEMES.Clear;
+  if (finalCloud <= 10) {
+    return isNight ? WEATHER_THEMES.ClearNight : WEATHER_THEMES.ClearDay;
+  }
+  if (finalCloud <= 30) {
+    return isNight ? WEATHER_THEMES.MostlyClearNight : WEATHER_THEMES.MostlyClearDay;
+  }
+  if (finalCloud <= 60) {
+    return isNight ? WEATHER_THEMES.PartlyCloudyNight : WEATHER_THEMES.PartlyCloudyDay;
+  }
+  if (finalCloud <= 85) {
+    return isNight ? WEATHER_THEMES.MostlyCloudyNight : WEATHER_THEMES.MostlyCloudyDay;
+  }
+  return isNight ? WEATHER_THEMES.OvercastNight : WEATHER_THEMES.OvercastDay;
 }
 
 /**

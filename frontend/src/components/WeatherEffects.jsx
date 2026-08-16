@@ -124,11 +124,11 @@ export default function WeatherEffects() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // --- Draw Moving Clouds for Clear / Cloudy / PartlyCloudy / Rain ---
-      if (activeKey === 'Clouds' || activeKey === 'PartlyCloudy' || activeKey === 'Rain' || activeKey === 'Clear') {
+      if (activeKey.includes('Cloud') || activeKey.includes('Overcast') || activeKey.includes('Clear')) {
         ctx.fillStyle = '#FFFFFF';
         canvasClouds.forEach((cl) => {
           ctx.beginPath();
-          ctx.globalAlpha = activeKey === 'Clear' ? cl.opacity * 0.6 : cl.opacity;
+          ctx.globalAlpha = activeKey.includes('Clear') ? cl.opacity * 0.5 : cl.opacity;
           ctx.arc(cl.x, cl.y, cl.r, 0, Math.PI * 2);
           ctx.arc(cl.x + cl.r * 0.5, cl.y - cl.r * 0.2, cl.r * 0.7, 0, Math.PI * 2);
           ctx.arc(cl.x - cl.r * 0.5, cl.y, cl.r * 0.6, 0, Math.PI * 2);
@@ -168,8 +168,8 @@ export default function WeatherEffects() {
       }
 
       // --- Flowing Wind Stream Animation ---
-      if (activeKey === 'Windy') {
-        ctx.strokeStyle = '#E0F2FE';
+      if (activeKey === 'Windy' || activeKey === 'Squall' || activeKey === 'Tornado') {
+        ctx.strokeStyle = activeKey === 'Tornado' ? '#F87171' : '#E0F2FE';
         windLines.forEach((wLine) => {
           ctx.beginPath();
           ctx.lineWidth = wLine.thickness;
@@ -186,10 +186,10 @@ export default function WeatherEffects() {
         });
       }
 
-      // --- Rain & Thunderstorm ---
-      if (activeKey === 'Rain' || activeKey === 'Thunderstorm') {
-        ctx.strokeStyle = activeKey === 'Thunderstorm' ? '#C084FC' : '#38BDF8';
-        ctx.lineWidth = 1.6;
+      // --- Rain, Drizzle & Thunderstorm ---
+      if (activeKey.includes('Rain') || activeKey.includes('Drizzle') || activeKey.includes('Thunderstorm')) {
+        ctx.strokeStyle = activeKey.includes('Thunderstorm') ? '#C084FC' : '#38BDF8';
+        ctx.lineWidth = activeKey.includes('Heavy') ? 2.2 : 1.6;
         drops.forEach((d) => {
           ctx.beginPath();
           ctx.globalAlpha = d.opacity;
@@ -205,7 +205,7 @@ export default function WeatherEffects() {
           }
         });
 
-        if (activeKey === 'Thunderstorm') {
+        if (activeKey.includes('Thunderstorm')) {
           nextFlashTimer--;
           if (nextFlashTimer <= 0) {
             lightningOpacity = Math.random() * 0.85 + 0.15;
@@ -218,7 +218,7 @@ export default function WeatherEffects() {
             lightningOpacity *= 0.82;
           }
         }
-      } else if (activeKey === 'Snow') {
+      } else if (activeKey.includes('Snow')) {
         ctx.fillStyle = '#FFFFFF';
         snowflakes.forEach((s) => {
           ctx.beginPath();
@@ -233,7 +233,7 @@ export default function WeatherEffects() {
             s.x = Math.random() * canvas.width;
           }
         });
-      } else if (activeKey === 'Night') {
+      } else if (theme?.isNight || activeKey.endsWith('Night')) {
         stars.forEach((st) => {
           st.alpha += st.alphaChange;
           if (st.alpha >= 1 || st.alpha <= 0.1) st.alphaChange *= -1;
