@@ -172,9 +172,12 @@ export default function SearchBar() {
           <div
             className="search-suggestion-item"
             onClick={handleUseMyLocation}
+            aria-disabled={isDetecting}
             style={{
               borderBottom: '1px solid var(--card-border)',
               padding: '12px 18px',
+              opacity: isDetecting ? 0.7 : 1,
+              pointerEvents: isDetecting ? 'none' : 'auto',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

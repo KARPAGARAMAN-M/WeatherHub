@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWeatherContext } from '../context/WeatherContext';
 import { useThemeContext } from '../context/ThemeContext';
 import { fetchApi } from '../utils/api';
@@ -29,9 +29,12 @@ export function useWeather() {
   const [pollution, setPollution] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
 
   const fetchWeatherData = useCallback(async (forceRefresh = false) => {
     if (!activeCity) return;
+    const requestId = ++requestIdRef.current;
+    const isCurrentRequest = () => requestId === requestIdRef.current;
 
     const locationName = typeof activeCity === 'string' ? activeCity.trim() : activeCity.name;
     let targetLat = activeCity?.lat;
@@ -48,6 +51,7 @@ export function useWeather() {
     if (!forceRefresh && apiCache.has(cacheKey)) {
       const cached = apiCache.get(cacheKey);
       if (now - cached.timestamp < CACHE_TTL_MS) {
+        if (!isCurrentRequest()) return;
         setCurrentWeather(cached.currentWeather);
         setForecast(cached.forecast);
         setPollution(cached.pollution);
@@ -168,6 +172,7 @@ export function useWeather() {
         weatherData.name = resolvedName;
       }
 
+      if (!isCurrentRequest()) return;
       setCurrentWeather(weatherData);
 
       if (weatherData.weather?.[0]) {
@@ -205,6 +210,7 @@ export function useWeather() {
       if (!forecastData || !forecastData.list) {
         forecastData = await fetchDirectOpenMeteoForecast(targetLat, targetLon);
       }
+      if (!isCurrentRequest()) return;
       setForecast(forecastData);
 
       // Step 4: Fetch Air Pollution Index
@@ -225,6 +231,7 @@ export function useWeather() {
       if (!pollutionData || !pollutionData.list) {
         pollutionData = await fetchDirectOpenMeteoPollution(targetLat, targetLon);
       }
+      if (!isCurrentRequest()) return;
       setPollution(pollutionData);
 
       // Save to client cache
@@ -237,12 +244,12 @@ export function useWeather() {
 
     } catch (err) {
       console.error('Weather fetch error:', err);
+      if (!isCurrentRequest()) return;
       setError(
         err.message || 'Location not found. Please try a different city, town, or country.'
       );
-      setCurrentWeather(null);
     } finally {
-      setLoading(false);
+      if (isCurrentRequest()) setLoading(false);
     }
   }, [activeCity, apiKey, updateCondition]);
 

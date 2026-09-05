@@ -3,7 +3,7 @@ import { CheckCircle2, AlertTriangle, Info, X, Navigation, AlertCircle } from 'l
 import { useWeatherContext } from '../context/WeatherContext';
 
 export default function LocationToast() {
-  const { locationToast, dismissToast } = useWeatherContext();
+  const { locationToast, dismissToast, detectCurrentLocation } = useWeatherContext();
 
   useEffect(() => {
     if (!locationToast) return;
@@ -12,11 +12,7 @@ export default function LocationToast() {
       return;
     }
 
-    const timer = setTimeout(() => {
-      dismissToast();
-    }, 6000);
-
-    return () => clearTimeout(timer);
+    return undefined;
   }, [locationToast, dismissToast]);
 
   if (!locationToast) return null;
@@ -51,17 +47,17 @@ export default function LocationToast() {
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
-        right: '24px',
+        bottom: 'max(16px, env(safe-area-inset-bottom))',
+        right: '16px',
         zIndex: 999999,
-        maxWidth: '420px',
-        width: 'calc(100vw - 48px)',
+        maxWidth: '380px',
+        width: 'calc(100vw - 32px)',
         background: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(16px)',
         border: `1.5px solid ${borderColor}`,
         borderRadius: 'var(--radius-lg)',
         boxShadow: `0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${bgGlow}`,
-        padding: '1rem 1.25rem',
+        padding: '0.75rem 0.9rem',
         display: 'flex',
         alignItems: 'flex-start',
         gap: '12px',
@@ -114,6 +110,25 @@ export default function LocationToast() {
       >
         <X size={16} />
       </button>
+      {type === 'error' && (
+        <button
+          type="button"
+          onClick={() => detectCurrentLocation({ isManualClick: true })}
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--card-border)',
+            color: 'var(--color-primary)',
+            cursor: 'pointer',
+            padding: '5px 8px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.78rem',
+            fontWeight: '700',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Retry
+        </button>
+      )}
     </div>
   );
 }

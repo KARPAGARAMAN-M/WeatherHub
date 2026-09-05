@@ -50,7 +50,7 @@ function DashboardContent() {
       />
 
       {/* Dashboard Main Content */}
-      {loading ? (
+      {loading && !currentWeather ? (
         <WeatherLoader />
       ) : error && !currentWeather ? (
         <WeatherError message={error} onRetry={refetch} />

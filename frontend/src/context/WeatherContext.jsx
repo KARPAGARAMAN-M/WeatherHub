@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { fetchApi } from '../utils/api';
 
 const WeatherContext = createContext();
@@ -74,12 +74,19 @@ export function WeatherProvider({ children }) {
   const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'detecting' | 'granted' | 'denied' | 'error'
   const [locationToast, setLocationToast] = useState(null);
   const [showLocationPromptModal, setShowLocationPromptModal] = useState(false);
+  const locationRequestRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
   const showToast = (message, type = 'info', title = '') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setLocationToast({ message, type, title, id: Date.now() });
+    if (type !== 'info' || !message.includes('Detecting')) {
+      toastTimerRef.current = setTimeout(() => setLocationToast(null), 6000);
+    }
   };
 
   const dismissToast = () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setLocationToast(null);
   };
 
@@ -182,13 +189,16 @@ export function WeatherProvider({ children }) {
     return resolved;
   };
 
-  // Function to perform high-accuracy GPS geolocation detection
+  const getPosition = (options) => new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
+
+  // Try a fresh GPS fix first, then allow the browser to use a less restrictive source.
   const detectCurrentLocation = async (options = {}) => {
-    const { isManualClick = false } = options;
+    if (locationRequestRef.current) return locationRequestRef.current;
 
     if (!navigator.geolocation) {
-      const msg = 'Geolocation is not supported by your browser.';
-      showToast(msg, 'error', 'Geolocation Unsupported');
+      showToast('Location is not supported by this browser.', 'error', 'Location unavailable');
       setLocationStatus('error');
       return false;
     }
@@ -196,50 +206,65 @@ export function WeatherProvider({ children }) {
     setLocationStatus('detecting');
     showToast('Detecting your location...', 'info', 'GPS Geolocation');
 
-    const result = await new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const locationData = await reverseGeocodeCoords(latitude, longitude);
-            
-            setActiveCity(locationData);
-            setLocationStatus('granted');
-            showToast(`Location detected: ${locationData.name}`, 'success', 'GPS Location Set');
-            resolve(true);
-          } catch (err) {
-            console.warn('Error processing GPS coordinates:', err);
-            showToast('Error processing location coordinates.', 'error', 'GPS Error');
-            setLocationStatus('error');
-            resolve(false);
-          }
-        },
-        (error) => {
-          setLocationStatus('denied');
-          let errMsg = 'Unable to determine your location.';
-          let errTitle = 'Location Error';
+    const request = (async () => {
+      let position;
+      let isFallbackPosition = false;
+      try {
+        position = await getPosition({ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+      } catch (firstError) {
+        if (firstError.code === 1) throw firstError;
+        try {
+          position = await getPosition({ enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 });
+          isFallbackPosition = true;
+        } catch (secondError) {
+          throw secondError;
+        }
+      }
 
-          if (error.code === error.PERMISSION_DENIED) {
-            errMsg = 'Location access was denied. Enable location permission in your browser settings to use your current location.';
-            errTitle = 'Permission Denied';
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errMsg = 'Unable to determine your current location. Please try again or search manually.';
-            errTitle = 'Location Unavailable';
-          } else if (error.code === error.TIMEOUT) {
-            errMsg = 'Location detection timed out. Please try again.';
-            errTitle = 'Request Timeout';
-          }
-
-          showToast(errMsg, 'error', errTitle);
-          console.warn('Browser GPS geolocation error:', error.message);
-          resolve(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
+      try {
+        const { latitude, longitude } = position.coords;
+        const locationData = await reverseGeocodeCoords(latitude, longitude);
+        locationData.locationSource = isFallbackPosition ? 'browser-fallback' : 'browser-gps';
+        locationData.isFallbackLocation = isFallbackPosition;
+        setActiveCity(locationData);
+        setLocationStatus('granted');
+        showToast(`Location detected: ${locationData.name}`, 'success', 'GPS Location Set');
+        return true;
+      } catch (err) {
+        console.warn('Error processing GPS coordinates:', err);
+        setLocationStatus('error');
+        showToast('Your location was found, but the place name could not be resolved. Weather was not changed.', 'error', 'Location details unavailable');
+        return false;
+      }
+    })().catch((error) => {
+      let message = 'Your location could not be determined. Please try again.';
+      let title = 'Location unavailable';
+      if (error.code === 1) {
+        message = 'Location permission is blocked. Enable location access in your browser settings.';
+        title = 'Permission blocked';
+        setLocationStatus('denied');
+      } else if (error.code === 3) {
+        message = 'Location detection took too long. Please try again.';
+        title = 'Location timeout';
+        setLocationStatus('error');
+      } else {
+        setLocationStatus('error');
+      }
+      showToast(message, 'error', title);
+      console.warn('Browser GPS geolocation error:', error.message);
+      return false;
+    }).finally(() => {
+      locationRequestRef.current = null;
     });
 
-    return result;
+    locationRequestRef.current = request;
+    return request;
   };
+
+  useEffect(() => () => {
+    if (locationRequestRef.current) locationRequestRef.current = null;
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
 
   // Check initial browser Geolocation permission status on application startup
   const checkStartupLocationPermission = async () => {
