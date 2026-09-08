@@ -139,19 +139,6 @@ export function useWeather() {
         }
       }
 
-      if (!activeCity.isCurrentLocation) {
-        addRecentSearch({
-          ...activeCity,
-          name: resolvedName,
-          state: resolvedState,
-          country: resolvedCountry,
-          district: resolvedDistrict,
-          locality: resolvedLocality,
-          lat: targetLat,
-          lon: targetLon,
-        });
-      }
-
       // Step 2: Fetch Current Weather (via Backend Proxy or Direct Open-Meteo)
       let weatherData = null;
       try {
@@ -249,6 +236,19 @@ export function useWeather() {
       }
       if (!isCurrentRequest()) return;
       setPollution(pollutionData);
+
+      if (!activeCity.isCurrentLocation) {
+        addRecentSearch({
+          ...activeCity,
+          name: resolvedName,
+          state: resolvedState,
+          country: resolvedCountry,
+          district: resolvedDistrict,
+          locality: resolvedLocality,
+          lat: targetLat,
+          lon: targetLon,
+        });
+      }
 
       // Save to client cache
       apiCache.set(cacheKey, {

@@ -6,7 +6,7 @@ import { useWeatherContext } from '../context/WeatherContext';
 import { getCountryName, formatLocationSubline } from '../utils/formatters';
 
 export default function SearchBar() {
-  const { setActiveCity, addRecentSearch, detectCurrentLocation } = useWeatherContext();
+  const { setActiveCity, detectCurrentLocation } = useWeatherContext();
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -60,7 +60,6 @@ export default function SearchBar() {
       lon: cityObj.lon,
     };
     setActiveCity(selectedCity);
-    addRecentSearch(selectedCity);
     setQuery('');
     setIsOpen(false);
     setSelectedIndex(-1);

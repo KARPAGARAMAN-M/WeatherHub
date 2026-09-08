@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { fetchApi } from '../utils/api';
 
 const WeatherContext = createContext();
@@ -301,7 +301,7 @@ export function WeatherProvider({ children }) {
     setUnit(prev => (prev === 'C' ? 'F' : 'C'));
   };
 
-  const addRecentSearch = (cityObj) => {
+  const addRecentSearch = useCallback((cityObj) => {
     if (!cityObj?.name || cityObj.isCurrentLocation) return;
     setRecentSearches((previous) => {
       const isSameLocation = (location) => {
@@ -312,9 +312,9 @@ export function WeatherProvider({ children }) {
       };
       return [cityObj, ...previous.filter((location) => !isSameLocation(location))].slice(0, 5);
     });
-  };
+  }, []);
 
-  const clearRecentSearches = () => setRecentSearches([]);
+  const clearRecentSearches = useCallback(() => setRecentSearches([]), []);
 
   return (
     <WeatherContext.Provider
