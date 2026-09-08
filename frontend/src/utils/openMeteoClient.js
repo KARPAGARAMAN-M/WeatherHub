@@ -54,11 +54,22 @@ function parseIsoToEpochSeconds(isoStr) {
   }
 }
 
+function validateCoordinates(lat, lon) {
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lon))) {
+    throw new Error('Weather location coordinates are invalid. Please search for the location again.');
+  }
+}
+
 export async function fetchDirectOpenMeteoCurrent(lat, lon, locationDetails = {}) {
+  validateCoordinates(lat, lon);
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,uv_index_max&wind_speed_unit=ms&timezone=auto`;
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Open-Meteo weather fetch failed');
+  if (!res.ok) {
+    const responseBody = await res.text();
+    console.error('Open-Meteo weather request failed', { status: res.status, url, responseBody });
+    throw new Error('Open-Meteo weather fetch failed');
+  }
   const data = await res.json();
 
   const current = data.current || {};
@@ -131,6 +142,7 @@ export async function fetchDirectOpenMeteoCurrent(lat, lon, locationDetails = {}
 }
 
 export async function fetchDirectOpenMeteoForecast(lat, lon) {
+  validateCoordinates(lat, lon);
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=auto`;
 
   const res = await fetch(url);
@@ -185,6 +197,7 @@ export async function fetchDirectOpenMeteoForecast(lat, lon) {
 }
 
 export async function fetchDirectOpenMeteoPollution(lat, lon) {
+  validateCoordinates(lat, lon);
   const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone`;
 
   const res = await fetch(url);
