@@ -6,7 +6,7 @@ import { useWeatherContext } from '../context/WeatherContext';
 import { getCountryName, formatLocationSubline } from '../utils/formatters';
 
 export default function SearchBar() {
-  const { setActiveCity, detectCurrentLocation } = useWeatherContext();
+  const { setActiveCity, addRecentSearch, detectCurrentLocation } = useWeatherContext();
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -49,14 +49,18 @@ export default function SearchBar() {
   }, [suggestions]);
 
   const handleSelectCity = (cityObj) => {
-    setActiveCity({
+    const selectedCity = {
       name: cityObj.name,
+      locality: cityObj.locality || '',
+      city: cityObj.city || '',
       district: cityObj.district || cityObj.county || '',
       state: cityObj.state || '',
       country: cityObj.country || '',
       lat: cityObj.lat,
       lon: cityObj.lon,
-    });
+    };
+    setActiveCity(selectedCity);
+    addRecentSearch(selectedCity);
     setQuery('');
     setIsOpen(false);
     setSelectedIndex(-1);
@@ -73,7 +77,8 @@ export default function SearchBar() {
     } else if (suggestions.length > 0) {
       handleSelectCity(suggestions[0]);
     } else {
-      setActiveCity({ name: cleanQuery });
+      const searchedCity = { name: cleanQuery };
+      setActiveCity(searchedCity);
       setQuery('');
       setIsOpen(false);
       setSelectedIndex(-1);

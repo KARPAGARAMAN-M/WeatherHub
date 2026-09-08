@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, MapPin, ArrowUp, ArrowDown, Thermometer, Calendar, Clock, Navigation, Camera, Compass } from 'lucide-react';
+import { MapPin, ArrowUp, ArrowDown, Thermometer, Calendar, Clock, Navigation, Camera, Compass } from 'lucide-react';
 import {
   formatTemp,
   formatDate,
@@ -20,7 +20,7 @@ import { useThemeContext } from '../context/ThemeContext';
 import WeatherIllustration from './WeatherIllustration';
 
 export default function WeatherHero({ currentWeather }) {
-  const { activeCity, unit, isCitySaved, toggleSaveCity } = useWeatherContext();
+  const { activeCity, unit } = useWeatherContext();
   const { theme } = useThemeContext();
 
   const [displayTemp, setDisplayTemp] = useState(null);
@@ -67,17 +67,6 @@ export default function WeatherHero({ currentWeather }) {
   const resolvedCity = activeCity?.city || '';
   const displayName = (name && name !== 'Current Location') ? name : (activeCity?.name || 'Current Location');
 
-  const cityObj = {
-    name: displayName,
-    locality: resolvedLocality,
-    district: resolvedDistrict,
-    state: resolvedState,
-    country: resolvedCountry,
-    lat: coord?.lat,
-    lon: coord?.lon,
-  };
-
-  const isSaved = isCitySaved(cityObj);
   const locationHeadline = formatLocationHeadline({
     name: displayName,
     locality: resolvedLocality,
@@ -165,23 +154,6 @@ export default function WeatherHero({ currentWeather }) {
                   <Navigation size={12} /> High-Accuracy GPS
                 </span>
               )}
-              <button
-                type="button"
-                onClick={() => toggleSaveCity(cityObj)}
-                className="btn-ghost"
-                style={{
-                  padding: '5px 14px',
-                  fontSize: '0.82rem',
-                  borderRadius: 'var(--radius-pill)',
-                  borderColor: isSaved ? 'var(--color-primary)' : 'var(--card-border)',
-                  color: isSaved ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  background: isSaved ? 'var(--badge-bg)' : 'transparent',
-                }}
-                title={isSaved ? 'Remove from saved places' : 'Save city'}
-              >
-                <Star size={14} fill={isSaved ? 'var(--color-primary)' : 'none'} />
-                <span>{isSaved ? 'Saved Location' : 'Save Location'}</span>
-              </button>
             </div>
             {locationSubline && (
               <div style={{ fontSize: '1.02rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginTop: '4px', marginLeft: '36px' }}>

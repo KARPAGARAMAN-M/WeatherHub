@@ -21,7 +21,7 @@ const CACHE_TTL_MS = 300000; // 5 minutes
  * Manages fetching current weather, forecast, and air pollution data with client caching.
  */
 export function useWeather() {
-  const { activeCity, apiKey } = useWeatherContext();
+  const { activeCity, apiKey, addRecentSearch } = useWeatherContext();
   const { updateCondition } = useThemeContext();
 
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -32,7 +32,10 @@ export function useWeather() {
   const requestIdRef = useRef(0);
 
   const fetchWeatherData = useCallback(async (forceRefresh = false) => {
-    if (!activeCity) return;
+    if (!activeCity) {
+      setLoading(false);
+      return;
+    }
     const requestId = ++requestIdRef.current;
     const isCurrentRequest = () => requestId === requestIdRef.current;
 
@@ -134,6 +137,19 @@ export function useWeather() {
         } catch (e) {
           console.warn('District reverse geocode lookup failed:', e);
         }
+      }
+
+      if (!activeCity.isCurrentLocation) {
+        addRecentSearch({
+          ...activeCity,
+          name: resolvedName,
+          state: resolvedState,
+          country: resolvedCountry,
+          district: resolvedDistrict,
+          locality: resolvedLocality,
+          lat: targetLat,
+          lon: targetLon,
+        });
       }
 
       // Step 2: Fetch Current Weather (via Backend Proxy or Direct Open-Meteo)
@@ -251,7 +267,7 @@ export function useWeather() {
     } finally {
       if (isCurrentRequest()) setLoading(false);
     }
-  }, [activeCity, apiKey, updateCondition]);
+  }, [activeCity, apiKey, addRecentSearch, updateCondition]);
 
   useEffect(() => {
     fetchWeatherData();

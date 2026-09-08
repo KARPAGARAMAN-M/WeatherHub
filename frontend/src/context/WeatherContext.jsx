@@ -3,21 +3,6 @@ import { fetchApi } from '../utils/api';
 
 const WeatherContext = createContext();
 
-const DEFAULT_SAVED_CITIES = [
-  { name: 'Chennai', state: 'Tamil Nadu', country: 'IN', lat: 13.0827, lon: 80.2707 },
-  { name: 'Mumbai', state: 'Maharashtra', country: 'IN', lat: 19.0760, lon: 72.8777 },
-  { name: 'Delhi', state: 'Delhi', country: 'IN', lat: 28.6139, lon: 77.2090 },
-  { name: 'Bengaluru', state: 'Karnataka', country: 'IN', lat: 12.9716, lon: 77.5946 },
-  { name: 'London', state: 'England', country: 'GB', lat: 51.5074, lon: -0.1278 },
-  { name: 'New York', state: 'New York', country: 'US', lat: 40.7128, lon: -74.0060 },
-  { name: 'Tokyo', state: 'Tokyo', country: 'JP', lat: 35.6762, lon: 139.6503 },
-  { name: 'Paris', state: 'Île-de-France', country: 'FR', lat: 48.8566, lon: 2.3522 },
-  { name: 'Sydney', state: 'New South Wales', country: 'AU', lat: -33.8688, lon: 151.2093 },
-  { name: 'Dubai', state: 'Dubai', country: 'AE', lat: 25.2048, lon: 55.2708 },
-  { name: 'Singapore', state: '', country: 'SG', lat: 1.3521, lon: 103.8198 },
-  { name: 'Toronto', state: 'Ontario', country: 'CA', lat: 43.6532, lon: -79.3832 },
-];
-
 export function WeatherProvider({ children }) {
   const [useCurrentLocationOnLaunch, setUseCurrentLocationOnLaunch] = useState(() => {
     const cached = localStorage.getItem('weatherhub_use_current_location_on_launch');
@@ -25,19 +10,18 @@ export function WeatherProvider({ children }) {
   });
 
   const [activeCity, setActiveCity] = useState(() => {
-    const cached = localStorage.getItem('weatherhub_active_city');
-    if (cached) {
-      try { return JSON.parse(cached); } catch (e) { /* ignore */ }
-    }
-    return DEFAULT_SAVED_CITIES[0]; // Chennai fallback
+    return null;
   });
 
-  const [savedCities, setSavedCities] = useState(() => {
-    const cached = localStorage.getItem('weatherhub_saved_cities');
+  const [recentSearches, setRecentSearches] = useState(() => {
+    const cached = sessionStorage.getItem('weatherhub_recent_searches');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) { /* ignore */ }
+      try {
+        const parsed = JSON.parse(cached);
+        return Array.isArray(parsed) ? parsed.slice(0, 5) : [];
+      } catch (e) { /* ignore invalid session data */ }
     }
-    return DEFAULT_SAVED_CITIES;
+    return [];
   });
 
   const [unit, setUnit] = useState(() => {
@@ -52,20 +36,14 @@ export function WeatherProvider({ children }) {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Sync settings & activeCity to localStorage
+  // Persist preferences only; active locations remain in memory.
   useEffect(() => {
     localStorage.setItem('weatherhub_use_current_location_on_launch', String(useCurrentLocationOnLaunch));
   }, [useCurrentLocationOnLaunch]);
 
   useEffect(() => {
-    if (activeCity) {
-      localStorage.setItem('weatherhub_active_city', JSON.stringify(activeCity));
-    }
-  }, [activeCity]);
-
-  useEffect(() => {
-    localStorage.setItem('weatherhub_saved_cities', JSON.stringify(savedCities));
-  }, [savedCities]);
+    sessionStorage.setItem('weatherhub_recent_searches', JSON.stringify(recentSearches));
+  }, [recentSearches]);
 
   useEffect(() => {
     localStorage.setItem('weatherhub_unit', unit);
@@ -323,61 +301,29 @@ export function WeatherProvider({ children }) {
     setUnit(prev => (prev === 'C' ? 'F' : 'C'));
   };
 
-  // Check if a city is saved based on lat/lon or location details
-  const isCitySaved = (target) => {
-    if (!target) return false;
-    const nameStr = typeof target === 'string' ? target : target.name;
-    const latNum = target?.lat;
-    const lonNum = target?.lon;
-
-    return savedCities.some(c => {
-      if (latNum != null && lonNum != null && c.lat != null && c.lon != null) {
-        return Math.abs(c.lat - latNum) < 0.05 && Math.abs(c.lon - lonNum) < 0.05;
-      }
-      return c.name.toLowerCase() === nameStr?.toLowerCase();
+  const addRecentSearch = (cityObj) => {
+    if (!cityObj?.name || cityObj.isCurrentLocation) return;
+    setRecentSearches((previous) => {
+      const isSameLocation = (location) => {
+        if (cityObj.lat != null && cityObj.lon != null && location.lat != null && location.lon != null) {
+          return Math.abs(location.lat - cityObj.lat) < 0.05 && Math.abs(location.lon - cityObj.lon) < 0.05;
+        }
+        return location.name?.toLowerCase() === cityObj.name.toLowerCase();
+      };
+      return [cityObj, ...previous.filter((location) => !isSameLocation(location))].slice(0, 5);
     });
   };
 
-  const toggleSaveCity = (cityObj) => {
-    if (!cityObj || !cityObj.name) return;
-    setSavedCities(prev => {
-      const exists = isCitySaved(cityObj);
-      if (exists) {
-        return prev.filter(c => {
-          if (cityObj.lat != null && cityObj.lon != null && c.lat != null && c.lon != null) {
-            return !(Math.abs(c.lat - cityObj.lat) < 0.05 && Math.abs(c.lon - cityObj.lon) < 0.05);
-          }
-          return c.name.toLowerCase() !== cityObj.name.toLowerCase();
-        });
-      } else {
-        return [...prev, cityObj];
-      }
-    });
-  };
-
-  const removeSavedCity = (target) => {
-    const nameStr = typeof target === 'string' ? target : target?.name;
-    const latNum = target?.lat;
-    const lonNum = target?.lon;
-
-    setSavedCities(prev => prev.filter(c => {
-      if (latNum != null && lonNum != null && c.lat != null && c.lon != null) {
-        return !(Math.abs(c.lat - latNum) < 0.05 && Math.abs(c.lon - lonNum) < 0.05);
-      }
-      return c.name.toLowerCase() !== nameStr?.toLowerCase();
-    }));
-  };
+  const clearRecentSearches = () => setRecentSearches([]);
 
   return (
     <WeatherContext.Provider
       value={{
         activeCity,
         setActiveCity,
-        savedCities,
-        setSavedCities,
-        isCitySaved,
-        toggleSaveCity,
-        removeSavedCity,
+        recentSearches,
+        addRecentSearch,
+        clearRecentSearches,
         unit,
         toggleUnit,
         apiKey,

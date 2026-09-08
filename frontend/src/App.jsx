@@ -55,18 +55,19 @@ function DashboardContent() {
       ) : error && !currentWeather ? (
         <WeatherError message={error} onRetry={refetch} />
       ) : !currentWeather ? (
-        <div
-          className="surface-card animate-fadeIn"
-          style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.25rem',
-            marginTop: '1.5rem',
-          }}
-        >
+        <>
+          <div
+            className="surface-card animate-fadeIn"
+            style={{
+              padding: '4rem 2rem',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1.25rem',
+              marginTop: '1.5rem',
+            }}
+          >
           <div
             style={{
               width: '72px',
@@ -86,7 +87,7 @@ function DashboardContent() {
               🌤 Welcome to WeatherHub
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--color-text-secondary)', maxWidth: '460px', lineHeight: '1.6' }}>
-              Search for any city or click a saved location to experience the live weather forecast and dynamic theme transitions.
+              Search for any city to experience the live weather forecast and dynamic theme transitions.
             </p>
           </div>
           <button
@@ -97,7 +98,9 @@ function DashboardContent() {
           >
             <Settings size={18} /> Open Settings
           </button>
-        </div>
+          </div>
+          <PlacesGrid />
+        </>
       ) : (
         <main>
           {/* Weather Alerts Banner (Checklist #8) */}
@@ -125,7 +128,7 @@ function DashboardContent() {
           {/* Lifestyle, Health & Activity Suggestions (Checklist #13) */}
           <LifestyleHealthGrid currentWeather={currentWeather} pollutionData={pollution} />
 
-          {/* Saved Places Grid (Checklist #9) */}
+          {/* Session-only recent searches */}
           <PlacesGrid />
         </main>
       )}
